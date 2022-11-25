@@ -8,6 +8,8 @@
     "format": "prettier --write \"src/**/*.ts\" ",
     "lint": "tslint -p tsconfig.json"
   },
+  "author": "Justin Hilliard <justin@functionary.run>",
+  "license": "MIT",
   "main": "lib/index.js",
   "dependencies": {
     "node-fetch": "^3.3.0"
@@ -27,5 +29,6 @@
   },
   "files": [
     "lib"
-  ]
+  ],
+  "gitHead": "9e1e55bc355ec89dbbab9cc1c33261d01a670131"
 }
