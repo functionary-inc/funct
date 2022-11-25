@@ -1,8 +1,21 @@
 {
-  "private": true,
+  "name": "functionary-inc",
+  "private": false,
+  "scripts": {
+    "publish": "lerna run build && lerna publish"
+  },
+  "author": "Justin Hilliard <justin@functionary.run>",
+  "license": "MIT",
   "workspaces": [
     "packages/client"
   ],
+  "prettier": {
+    "arrowParens": "avoid",
+    "printWidth": 120,
+    "proseWrap": "always",
+    "singleQuote": true,
+    "trailingComma": "all"
+  },
   "devDependencies": {
     "lerna": "^6.0.3",
     "prettier": "^2.8.0",

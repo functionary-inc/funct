@@ -1,4 +1,6 @@
 {
+  "version": "2.0.1",
+  "private": false,
   "name": "@functionary/client",
   "description": "A client library for calling the functionary API.",
   "scripts": {
@@ -6,19 +8,16 @@
     "format": "prettier --write \"src/**/*.ts\" ",
     "lint": "tslint -p tsconfig.json"
   },
-  "main": "index.js",
-  "author": "Functionary, Inc.",
-  "prettier": {
-    "arrowParens": "avoid",
-    "printWidth": 120,
-    "proseWrap": "always",
-    "singleQuote": true,
-    "trailingComma": "all"
-  },
-  "license": "MIT",
-  "private": false,
+  "main": "lib/index.js",
   "dependencies": {
     "node-fetch": "^3.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
   },
   "devDependencies": {
     "@types/jest": "^29.2.3",
@@ -27,6 +26,6 @@
     "ts-jest": "^29.0.3"
   },
   "files": [
-    "lib/**/*"
+    "lib"
   ]
 }
