@@ -1,0 +1,32 @@
+{
+  "name": "@functionary/client",
+  "description": "A client library for calling the functionary API.",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" ",
+    "lint": "tslint -p tsconfig.json"
+  },
+  "main": "index.js",
+  "author": "Functionary, Inc.",
+  "prettier": {
+    "arrowParens": "avoid",
+    "printWidth": 120,
+    "proseWrap": "always",
+    "singleQuote": true,
+    "trailingComma": "all"
+  },
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "node-fetch": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.2.3",
+    "@types/node": "^18.11.9",
+    "jest": "^29.3.1",
+    "ts-jest": "^29.0.3"
+  },
+  "files": [
+    "lib/**/*"
+  ]
+}
