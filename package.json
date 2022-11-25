@@ -6,6 +6,12 @@
   "workspaces": [
     "packages/client"
   ],
+  "author": "Justin Hilliard <justin@functionary.run>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/functionary-inc/functionary-javascript.git"
+  },
   "prettier": {
     "arrowParens": "avoid",
     "printWidth": 120,
