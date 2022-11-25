@@ -1,5 +1,5 @@
 {
-  "version": "3.0.0",
+  "version": "2.0.5",
   "private": false,
   "name": "@functionary/client",
   "description": "A client library for calling the functionary API.",
@@ -8,8 +8,6 @@
     "format": "prettier --write \"src/**/*.ts\" ",
     "lint": "tslint -p tsconfig.json"
   },
-  "author": "Justin Hilliard <justin@functionary.run>",
-  "license": "MIT",
   "main": "lib/index.js",
   "dependencies": {
     "node-fetch": "^3.3.0"
