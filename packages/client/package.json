@@ -1,7 +1,7 @@
 {
   "version": "3.0.1",
   "private": false,
-  "name": "@functionary/client",
+  "name": "@functionary-inc/client",
   "description": "A client library for calling the functionary API.",
   "scripts": {
     "build": "tsc",
@@ -28,5 +28,5 @@
   "files": [
     "lib"
   ],
-  "gitHead": "28d39ea2a224fb05d2a908883bb46fa7f9a18cc0"
+  "gitHead": "f266c428a47b4ef2fd924718187b349f18f751db"
 }
