@@ -1,0 +1,77 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://code.visualstudio.com/docs/remote/devcontainerjson-reference
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.234.0/containers/typescript-node
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.191.1/containers/docker-existing-dockerfile
+{
+  "name": "funct",
+  "workspaceFolder": "/workspaces/funct",
+  "dockerComposeFile": ["docker-compose.yml"],
+  "service": "app",
+
+  // Set *default* container specific settings.json values on container create.
+  "settings": {},
+
+  // Add the IDs of extensions you want installed when the container is created.
+  "extensions": [
+    "dbaeumer.vscode-eslint",
+    "ms-azuretools.vscode-docker",
+    "editorconfig.editorconfig",
+    "mikestead.dotenv",
+    "mgmcdermott.vscode-language-babel",
+    "orta.vscode-jest",
+    "esbenp.prettier-vscode",
+    "firsttris.vscode-jest-runner",
+    "eamodio.gitlens",
+    "github.github-vscode-theme",
+    "bungcip.better-toml",
+    "humao.rest-client",
+    "zxh404.vscode-proto3",
+    "neilding.language-liquid",
+    "prisma.prisma"
+  ],
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  // "forwardPorts": [3306, 9000, 8123, 2181, 9092, 2022],
+
+  // Use 'postCreateCommand' to run commands after the container is created.
+  // "postCreateCommand": "yarn setup:dev:create",
+
+  // Use 'postStartCommand' to run commands after the container is started.
+  // "postStartCommand": "yarn setup:dev:start",
+
+  // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  // "remoteUser": "node",
+  // "remoteUser": "vscode",
+
+  // https://code.visualstudio.com/docs/remote/devcontainerjson-reference#_formatting-string-vs-array-properties
+  "portsAttributes": {
+    // "9000": {
+    //   "label": "tcp-clickhouse"
+    // },
+    // "3306": {
+    //   "label": "mysql"
+    // },
+    // "8123": {
+    //   "label": "http-clickhouse"
+    // },
+    // "2181": {
+    //   "label": "zookeeper"
+    // },
+    // "9092": {
+    //   "label": "kafka"
+    // },
+    // "2022": {
+    //   "label": "cloudflared"
+    // }
+  },
+
+  "features": {
+    "git": "latest",
+    "homebrew": "latest",
+    "github-cli": "latest",
+    "docker-from-docker": {
+      "version": "latest",
+      "moby": true
+    }
+  }
+}
