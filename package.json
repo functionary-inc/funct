@@ -1,6 +1,6 @@
 {
   "private": false,
-  "name": "functionary-inc",
+  "name": "funct",
   "scripts": {
     "publish": "lerna run build && lerna publish"
   },
