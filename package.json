@@ -1,11 +1,12 @@
 {
-  "private": false,
+  "private": true,
   "name": "funct",
   "scripts": {
     "publish": "lerna run build && lerna publish"
   },
   "workspaces": [
-    "packages/client"
+    "packages/client",
+    "packages/docs"
   ],
   "author": "Justin Hilliard <justin@functionary.run>",
   "license": "MIT",
