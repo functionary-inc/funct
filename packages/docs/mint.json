@@ -1,0 +1,64 @@
+{
+  "name": "Functionary",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "api": {
+    "baseUrl": "https://functionary.run/",
+    "authentication": { "type": "apiKey" }
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#10b981",
+    "light": "#e4e4e7",
+    "dark": "#3f3f46",
+    "ultraLight": "#fafafa",
+    "ultraDark": "#18181b"
+  },
+  "topbarLinks": [
+    {
+      "name": "Contact",
+      "url": "mailto:justin@functionary.run"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Try It - FREE",
+    "url": "https://functionary.run/login"
+  },
+  "anchors": [
+    {
+      "name": "Contact Us",
+      "url": "mailto:justin@functionary.run",
+      "icon": "envelope",
+      "color": "#f43f5e"
+    },
+    {
+      "name": "Get Started",
+      "url": "https://functionary.run/login",
+      "icon": "star-shooting",
+      "color": "#0ea5e9"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Introduction",
+      "pages": ["get-started"]
+    },
+    {
+      "group": "Configuration",
+      "pages": ["overview", "models", "funnels", "actions", "sample"]
+    },
+    {
+      "group": "Platform API",
+      "pages": ["identify", "events"]
+    },
+    {
+      "group": "Action Types",
+      "pages": ["twilio", "sendgrid", "slack", "webhook"]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/jahilliar"
+  }
+}

@@ -1,0 +1,61 @@
+---
+title: "Actions"
+---
+
+Actions are how you define activities that happens after a [step](/funnels#steps) is satified. Actions are not a
+top-level key like `models` or `funnels`. Instead they live inside steps, which live inside funnels (see example at bottom
+in [funnels](/funnels)).
+
+### Parameters
+
+<ParamField body="type" type="string" required>
+  This is the type of the action. For example, `slack`, `email`, `sms`, or
+  `webhook`. See the [Action Types]() section for more details
+</ParamField>
+
+<ParamField body="args" type="object" required>
+  Detailed parameters for the action. These can use
+  [liquid](https://shopify.github.io/liquid/) templating for each recursive
+  value in the args object. See the [Action Types](). For detailed examples of
+  the shape of the args parameter.
+</ParamField>
+
+### Templating Args
+
+you can use [liquid](https://shopify.github.io/liquid/) to template the string values in the `action.args` object.
+
+For example, let's say you want to send a congrats text to a customer after they complete onboarding. The action
+might look like
+
+```json
+{
+  "type": "sms",
+  "args": {
+    "number": "{{modelProperties.number}}",
+    "content": "Congrats {{displayName}}!"
+  }
+}
+```
+
+when the step is statisfied the action would turn into something like
+
+```json
+{
+  "type": "sms",
+  "args": { "number": "+14248349987", "content": "Congrats Justin!" }
+}
+```
+
+which would eventually turn into send a sms to `14248349987` saying `Congrats Justin!`.  
+These action objects have access to these parameters.
+
+### Accessible Properties
+
+| Parameter         | example                              | Description                                                                                                                                              |
+| ----------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `modelProperties` | `{{modelProperties.fisrtName}}`      | All the properties EVER stored on the model. These are created by setting the `properties` value in a `api/v1/identify` call. these are last write wins. |
+| `displayName`     | `{{displayName}}`                    | the displayName from the model object triggering the action.                                                                                             |
+| `model`           | `{{model}}`                          | the model name of the model object triggering the action.                                                                                                |
+| `funnel`          | `{{funnel}}`                         | the funnel id of the action.                                                                                                                             |
+| `event`           | `{{event}}`                          | the event name of the event triggering the action.                                                                                                       |
+| `eventProperties` | `{{eventProperties.attributionSrc}}` | The properties that are sent with the event that triggered this action. note: this is only the properties from this event.                               |

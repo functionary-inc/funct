@@ -1,0 +1,61 @@
+---
+title: "twilio"
+---
+
+<Note>
+  If you haven't learned about actions checkout the [actions page](/actions).
+</Note>
+
+Sends a text to the number specified with the content specified.
+
+<ParamField body="type" type="string = 'twilio'" required>
+  Must equal the string `twilio`.
+</ParamField>
+
+<ParamField body="integrationId" type="string">
+  The `integrationId` is the id from the integrations page. Technically, this is
+  optional. If it is left blank, we will send messages from the functionary
+  twilio account. The `from` parameter will be over written with `+19789991191`,
+  which will be the sending phone number.
+</ParamField>
+
+<ParamField body="args" type="object" required>
+  <Expandable title="properties" defaultOpen={true}>
+
+    <ResponseField name="to" type="templatable string" required>
+      number to send the text, including the country code (ie +13876658364). No dashes or seperations.
+    </ResponseField>
+
+    <ResponseField name="from" type="templatable string" required>
+      number to send the text from, including the country code (ie +13876658364). No dashes or seperations.
+      You need to have this number set up in the Twilio Dashboard and be authorized to send text from it.
+    </ResponseField>
+
+    <ResponseField name="body" type="templatable string" required>
+      the content of the text message.
+    </ResponseField>
+
+  </Expandable>
+  
+</ParamField>
+
+```json
+{
+  "type": "twilio",
+
+  "args": {
+    "to": "{{modelProperties.number}}",
+    "from": "+19789991191",
+    "body": "Congrats {{displayName}}!"
+  }
+}
+```
+
+<Tip>
+  See [action](/actions) for all the accessible properties for templating
+</Tip>
+
+<Tip>
+  We'll build any action. No questions asked. Just email me at
+  justin@functionary.run
+</Tip>

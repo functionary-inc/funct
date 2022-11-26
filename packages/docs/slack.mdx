@@ -1,0 +1,61 @@
+---
+title: "slack"
+---
+
+<Note>
+  If you haven't learned about actions checkout the [actions page](/actions).
+</Note>
+
+How to interact with the slack API with functionary.
+
+##### Message a Slack Channel
+
+<ParamField body="type" type="string = 'slack'" required>
+  Must equal the string `slack`.
+</ParamField>
+
+<ParamField body="integrationId" type="string">
+  The `integrationId` is the id from the integrations page. Technically, this is
+  optional. If it is left blank, we will send a message from the functionary
+  slack bot account.
+</ParamField>
+
+<ParamField body="args" type="object" required>
+  <Expandable title="Send a Message to a Channel" defaultOpen={true}>
+
+    <ResponseField name="method" type="string = 'message'" required>
+      The type of slack action.  In this case it's `message`.
+
+      `message` sends a message to a slack channel.
+    </ResponseField>
+
+    <ResponseField name="channel" type="templatable string" required>
+        Name of the slack channel to send a message too.
+    </ResponseField>
+
+    <ResponseField name="content" type="templatable string" required>
+        Content of the message to send to the slack channel.
+    </ResponseField>
+
+  </Expandable>
+</ParamField>
+
+```json
+{
+  "type": "slack",
+  "args": {
+    "method": "message",
+    "channel": "{{modelProperties.slackConnectChannel}}",
+    "content": "Finished integration."
+  }
+}
+```
+
+<Tip>
+  See [action](/actions) for all the accessible properties for templating
+</Tip>
+
+<Tip>
+  We'll build any action. No questions asked. Just email me at
+  justin@functionary.run
+</Tip>

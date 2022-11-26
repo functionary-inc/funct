@@ -1,0 +1,77 @@
+---
+title: "Funnels"
+---
+
+Funnels represent an event or sequence of events taken by a model. These events are represented by steps. These steps can trigger actions.
+
+For example, an app might have an onboarding funnel with 3 steps; `sign_up`, `development_api_call`, and `production_api_call`. On `sign_up`,
+you might want to be notified in a slack channel of the `sign_up` and reminded via email 3 days later if a customer doesn't get to `development_api_call`. While for
+`production_api_call` you might want to send the customer a personalized email or slack message congratulating them for completing integration. You can define all
+this behavior in funnels.
+
+### Parameters
+
+<ParamField body="id" type="string" required>
+  Human-readable identifier for the Funnel.
+</ParamField>
+
+<ParamField body="forModels" type="string[] | string" required>
+  The list of model names or name that should are applicable for this funnel.
+  For example, maybe your onboarding funnel is only applicable to a customer,
+  not an organization.
+</ParamField>
+### Steps
+<ParamField body="steps" type="step[] | step" required>
+  Steps are the sequential events that happen during a funnel. They will 
+  have actions that will fire when the event is fired and the steps is satified.
+  Events get called when the developer calls `/api/v1/events` with an event name 
+  that equals the event name in the step object. See [events endpoint](/events)
+  for more information.
+
+<Warning>
+  If there are multiple events in a `steps` array, the event can only be
+  satified if every event before it have been satified and the single event
+  after it has NOT been satified.
+</Warning>
+<br />
+<Expandable title="step properties 👇" defaultOpen={true}>
+    <ResponseField name="event" type="string" required>
+      The event name that will trigger the step.
+    </ResponseField>
+
+    <ResponseField name="actions" type="action[] | action">
+      The actions that are fired when the step is hit. See the
+      [actions section](/actions) below for more details.
+    </ResponseField>
+
+  </Expandable>
+  
+</ParamField>
+<br />
+```json Funnels Example
+{
+  "funnels": [
+    {
+      "id": "onboarding",
+      "forModels": "customer",
+      "steps": [
+        {
+          "event": "sign_up",
+          "actions": [ ...actions ]
+        },
+        {
+          "event": "development_api_call",
+          // this step doesn't take actions
+        },
+        {
+          "event": "production_api_call",
+          "actions": [ ...actions ]
+        }
+        ...otherSteps
+      ]
+    }
+    ...otherFunnels
+  ],
+  ...restOfConfig
+}
+```

@@ -1,0 +1,68 @@
+---
+title: "Events"
+description: "Fire an event"
+api: "POST api/v1/event"
+---
+
+## Basics
+
+There are 2 main API endpoints for functionary. The first is `/api/v1/identify`.
+The second is `/api/v1/events`.
+
+<ParamField body="name" type="string" required>
+  name of the event.
+</ParamField>
+
+<ParamField body="ids" type="(string | number)[]" required>
+  id or ids of the model your are calling the event on. If the model doesn't
+  exist, the event will be thrown out.
+</ParamField>
+
+<ParamField body="properties" type="object">
+  Properties you want stored on the event you are creating.
+</ParamField>
+
+<ParamField body="model" type="string">
+  The type of the model to assign the event. This is for to avoiding `id`
+  collisions accross model types. For example, you may send `ids = [1]`, but it
+  is possible that a model where `id=1` exists for both model types of
+  "organization" and "customer". If `model="customer"` exists functionary knows
+  to assign event to the "customer" model not the organization. If it doesn't
+  exist, functionary will assign the relationship to the first model it finds
+  with a matching id.
+</ParamField>
+
+<ParamField
+  header="Authorization"
+  placeholder="Bearer this-is-token"
+  type="object"
+>
+  Your api key found in the dashboard under settings
+</ParamField>
+
+<RequestExample>
+```bash JavaScript
+await fetch('https://functionary.run/api/v1/events', 
+    {  
+        method: "POST", 
+        header: {
+            Authorization: "Bearer MY-TOKEN"
+        }
+        body: {
+            ids: ['10', 'test@example.com'],
+            event: 'sign_up',
+        } 
+    }
+)
+```
+</RequestExample>
+
+<ResponseExample>
+
+```json Response Example
+{
+  "statusCode": 200
+}
+```
+
+</ResponseExample>

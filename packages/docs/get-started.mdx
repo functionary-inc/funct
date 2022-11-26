@@ -1,0 +1,31 @@
+---
+title: "What is Functionary?"
+---
+
+Functionary does stuff based on the set of analytic events that have been fired for a user. It can
+triggers alerts, sends slack/text messages, sends transactional/marketing emails, triggers
+webhooks, or really anything else.
+
+Based on the events, functionary creates a concept of state. Using that state,
+it decides if it should do something (or not) for a user in your app.
+
+The API interfaces is the same as Mixpanel, Posthog, or Amplitude. Just call `/identify` and `/events`.
+
+It's all defined by you and easily updated in a config file.
+
+<CardGroup cols={2}>
+  <Card title="Alerts" icon={duotone("square-1")} color="#ea5a0c">
+    Get SMS, email, and slack alerts as users complete events.
+  </Card>
+  <Card title="Webhooks" icon={duotone("square-2")} color="#0285c7">
+    Trigger webhooks as users complete events.
+  </Card>
+  <Card title="Emails" icon={duotone("square-3")} color="#16a34a">
+    Send you or your customers emails when they complete certain events
+  </Card>
+  <Card title="Slack" icon={duotone("square-4")} color="#dc2626">
+    Send slack messages, create channels, or trigger automated messages from
+    your personal slack account into a shared channel as customers integrate
+    your product.
+  </Card>
+</CardGroup>
