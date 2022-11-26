@@ -4442,7 +4442,7 @@ kleur@^3.0.3:
 
 lerna@^6.0.3:
   version "6.0.3"
-  resolved "https://registry.npmjs.org/lerna/-/lerna-6.0.3.tgz"
+  resolved "https://registry.yarnpkg.com/lerna/-/lerna-6.0.3.tgz#0364eadeedbdf5ade375d8a6f0a87bb9003f6019"
   integrity sha512-DzRCTZGoDI502daViNK1Ha+HPAVvTp72xshDOQ6o6SWCDTvnxFI3hGF6CBqGWnOoPwEOlQowHEIcPw5PjoMz8A==
   dependencies:
     "@lerna/add" "6.0.3"
