@@ -1,8 +1,8 @@
 {
   "version": "3.0.3",
   "private": false,
-  "name": "@funct/client",
-  "description": "A client library for calling the functionary API.",
+  "name": "@funct/core",
+  "description": "The shared resources for all the packages for calling the functionary API.",
   "scripts": {
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\" ",
@@ -17,8 +17,5 @@
   },
   "files": [
     "lib"
-  ],
-  "dependencies": {
-    "node-fetch": "^3.3.0"
-  }
+  ]
 }

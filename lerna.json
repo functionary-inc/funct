@@ -1,5 +1,5 @@
 {
-  "packages": ["packages/client"],
+  "packages": ["packages/client", "packages/core"],
   "npmClient": "yarn",
   "useWorkspaces": true,
   "lerna": "3.4.0",

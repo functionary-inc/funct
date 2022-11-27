@@ -1,0 +1,5 @@
+#!/bin/sh
+
+lerna run lint
+lerna run format
+lerna run test

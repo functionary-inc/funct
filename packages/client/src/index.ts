@@ -1,4 +1,4 @@
-import nodeFetch from "node-fetch"
+import nodeFetch from 'node-fetch';
 /**
  * Interface for payload expected by the `identify` endpoint.
  * See for detailed explination of params => https://docs.functionary.run/identify
@@ -6,16 +6,16 @@ import nodeFetch from "node-fetch"
  * @interface
  */
 export interface FunctionaryIdentify {
-  model: string
-  ids: (string | number)[]
+  model: string;
+  ids: (string | number)[];
   // Not Required, but rec for the first /identify
-  displayName?: string
+  displayName?: string;
   // situationally applicable
-  properties?: object
-  childIds?: (string | number)[]
-  childModel?: string
-  parentIds?: (string | number)[]
-  parentModel?: string
+  properties?: object;
+  childIds?: (string | number)[];
+  childModel?: string;
+  parentIds?: (string | number)[];
+  parentModel?: string;
 }
 
 /**
@@ -25,11 +25,11 @@ export interface FunctionaryIdentify {
  * @interface
  */
 export interface FunctionaryEvent {
-  model?: string
-  ids: (string | number)[]
-  name: string
+  model?: string;
+  ids: (string | number)[];
+  name: string;
   // situationally applicable
-  properties?: object
+  properties?: object;
 }
 
 /**
@@ -37,42 +37,42 @@ export interface FunctionaryEvent {
  * @constructor
  */
 class Functionary {
-  private _fetch
-  private _apikey: string
-  private _baseURL: string
+  private _fetch;
+  private _apikey: string;
+  private _baseURL: string;
 
   constructor(opts: { apikey: string; baseURL?: string }) {
-    const { apikey, baseURL = "https://functionary.run/api/v1/" } = opts
+    const { apikey, baseURL = 'https://functionary.run/api/v1/' } = opts;
     if (!!window && !!window.fetch) {
-      this._fetch = window.fetch
+      this._fetch = window.fetch;
     } else {
-      this._fetch = nodeFetch
+      this._fetch = nodeFetch;
     }
-    this._baseURL = baseURL
-    this._apikey = apikey
+    this._baseURL = baseURL;
+    this._apikey = apikey;
   }
 
   async identify(payload: FunctionaryIdentify) {
     return await this._fetch(`${this._baseURL}identify`, {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${this._apikey}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
-    })
+    });
   }
 
   async event(payload: FunctionaryEvent) {
     return await this._fetch(`${this._baseURL}event`, {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${this._apikey}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
-    })
+    });
   }
 }
 
-export default Functionary
+export default Functionary;
