@@ -1,12 +1,12 @@
 {
-  "private": true,
+  "private": false,
   "name": "funct",
   "scripts": {
     "lint": "lerna run --parallel lint --",
     "format": "lerna run --parallel format --",
     "setup:dev:create": "scripts/postCreate",
     "build": "lerna run --parallel build --",
-    "publish": "lerna publish --",
+    "publish": "lerna run --parallel build && lerna publish --",
     "prepare": "husky install"
   },
   "workspaces": [
@@ -38,5 +38,6 @@
     "tslint": "^6.1.3",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^4.9.3"
-  }
+  },
+  "version": "3.0.3"
 }
