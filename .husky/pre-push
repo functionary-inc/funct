@@ -1,5 +1,5 @@
 #!/bin/sh
 
-lerna run lint
-lerna run format
-lerna run test
+yarn lerna run lint
+yarn lerna run format
+yarn lerna run test

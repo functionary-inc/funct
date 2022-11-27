@@ -6,7 +6,8 @@
     "format": "lerna run --parallel format --",
     "setup:dev:create": "scripts/postCreate",
     "build": "lerna run --parallel build --",
-    "publish": "lerna publish --"
+    "publish": "lerna publish --",
+    "prepare": "husky install"
   },
   "workspaces": [
     "packages/client",
