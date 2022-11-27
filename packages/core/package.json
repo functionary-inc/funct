@@ -1,5 +1,5 @@
 {
-  "version": "3.0.3",
+  "version": "3.0.4",
   "private": false,
   "name": "@funct/core",
   "description": "The shared resources for all the packages for calling the functionary API.",
