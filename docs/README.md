@@ -1,1 +1,0 @@
-# functionary-docs
