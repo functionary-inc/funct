@@ -1,7 +1,7 @@
 {
   "private": false,
   "version": "4.0.0",
-  "name": "@funct/client",
+  "name": "@funct/react",
   "description": "A client library for calling the functionary API.",
   "scripts": {
     "build": "tsc --build",
@@ -28,6 +28,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@funct/core": "^4.0.0"
+    "@funct/core": "^4.0.0",
+    "react": "^18.2.0"
   }
 }

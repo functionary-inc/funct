@@ -12,8 +12,7 @@
     "prepare": "husky install"
   },
   "workspaces": [
-    "packages/client",
-    "packages/core"
+    "packages/*"
   ],
   "author": "Justin Hilliard <justin@functionary.run>",
   "license": "MIT",
@@ -26,7 +25,8 @@
     "printWidth": 120,
     "proseWrap": "always",
     "singleQuote": true,
-    "trailingComma": "all"
+    "trailingComma": "all",
+    "semi": false
   },
   "devDependencies": {
     "@babel/preset-env": "^7.20.2",

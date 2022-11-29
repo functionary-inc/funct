@@ -2,3 +2,4 @@
 
 yarn lint
 yarn format
+yarn test
