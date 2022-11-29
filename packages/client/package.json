@@ -1,12 +1,20 @@
 {
-  "version": "3.0.4",
   "private": false,
+  "version": "4.0.0",
   "name": "@funct/client",
   "description": "A client library for calling the functionary API.",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
+    "build:watch": "tsc --build --watch",
     "format": "prettier --write \"src/**/*.ts\" ",
-    "lint": "tslint -p tsconfig.json"
+    "lint": "tslint -p tsconfig.json",
+    "test": "NODE_ENV=\"test\" jest --"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "transform": {
+      "^.+\\.(ts|tsx)?$": "../../babel.transformer.js"
+    }
   },
   "main": "lib/index.js",
   "publishConfig": {
@@ -18,7 +26,8 @@
   "files": [
     "lib"
   ],
+  "license": "MIT",
   "dependencies": {
-    "node-fetch": "^3.3.0"
+    "@funct/core": "^4.0.0"
   }
 }
