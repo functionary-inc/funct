@@ -7,7 +7,7 @@
     "setup:dev:create": "scripts/postCreate",
     "build": "lerna run --parallel build --",
     "build:watch": "lerna run --parallel build:watch --",
-    "publish": "lerna run --parallel build && lerna publish --",
+    "lerna:publish": "lerna run --parallel build && lerna publish --",
     "test": "lerna run test --",
     "prepare": "husky install"
   },
