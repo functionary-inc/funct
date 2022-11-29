@@ -57,25 +57,27 @@ export class Functionary {
   constructor(opts: FunctionaryOptions) {
     this._opts = opts
 
-    if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY) {
-      this._apikey = process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY
-    } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_API_KEY) {
-      this._apikey = process.env.FUNCTIONARY_API_KEY
-      //@ts-ignore Remix was for doing front-end env vars
-    } else if (!!window && !!window.env && !!window.env.FUNCTIONARY_API_KEY) {
-      //@ts-ignore Remix was for doing front-end env vars
-      this._apikey = window.env.FUNCTIONARY_API_KEY
-    }
+    try {
+      if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY) {
+        this._apikey = process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY
+      } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_API_KEY) {
+        this._apikey = process.env.FUNCTIONARY_API_KEY
+        //@ts-ignore Remix was for doing front-end env vars
+      } else if (!!window && !!window.env && !!window.env.FUNCTIONARY_API_KEY) {
+        //@ts-ignore Remix was for doing front-end env vars
+        this._apikey = window.env.FUNCTIONARY_API_KEY
+      }
 
-    if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG) {
-      this._debug = process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG
-    } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_DEBUG) {
-      this._debug = process.env.FUNCTIONARY_DEBUG
-      //@ts-ignore Remix was for doing front-end env vars
-    } else if (!!window && !!window.env && !!window.env.FUNCTIONARY_DEBUG) {
-      //@ts-ignore Remix was for doing front-end env vars
-      this._debug = window.env.FUNCTIONARY_DEBUG
-    }
+      if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG) {
+        this._debug = process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG
+      } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_DEBUG) {
+        this._debug = process.env.FUNCTIONARY_DEBUG
+        //@ts-ignore Remix was for doing front-end env vars
+      } else if (!!window && !!window.env && !!window.env.FUNCTIONARY_DEBUG) {
+        //@ts-ignore Remix was for doing front-end env vars
+        this._debug = window.env.FUNCTIONARY_DEBUG
+      }
+    } catch (e) {}
   }
 
   private get httpHandler() {
