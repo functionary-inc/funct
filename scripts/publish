@@ -1,0 +1,7 @@
+
+npm login
+npm config set scope funct --global
+npm config set access public
+npm publish --scope=funct
+npm publish --workspace @funct/core
+npm publish --workspace @funct/react
