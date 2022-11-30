@@ -6,7 +6,7 @@ import {
   FunctionaryEvent,
 } from '@funct/core'
 export { FunctionaryIdentify, FunctionaryEvent, Functionary } from '@funct/core'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 class ReactFunctionary extends BaseFunctionary {
   constructor() {
@@ -33,6 +33,10 @@ export const useFunctionary = (): Functionary => {
   const functionary = useMemo<ReactFunctionary>(() => {
     return new ReactFunctionary()
   }, [])
+
+  useEffect(() => {
+    functionary.setupFromStorageDelegate()
+  }, [functionary])
 
   const event = useCallback(
     async (payload: FunctionaryEvent) => {

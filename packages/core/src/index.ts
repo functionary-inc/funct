@@ -90,7 +90,7 @@ export abstract class BaseFunctionary implements Functionary {
     this.storageDelegate = storageDelegate
     this.httpHandler = httpHandler
 
-    this.setup()
+    this.setupFromEnv()
   }
 
   setBaseUrl(url: string): void {
@@ -118,15 +118,11 @@ export abstract class BaseFunctionary implements Functionary {
     this.storageDelegate.set('baseURL', url)
   }
 
-  private setup() {
-    this._setupFromStorageDelegate()
-
-    if (this.apikeyExists()) {
-      if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY) {
-        this.apikey = process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY
-      } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_API_KEY) {
-        this.apikey = process.env.FUNCTIONARY_API_KEY
-      }
+  setupFromEnv() {
+    if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY) {
+      this._apikey = process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY
+    } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_API_KEY) {
+      this._apikey = process.env.FUNCTIONARY_API_KEY
     }
 
     if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG) {
@@ -136,7 +132,7 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  private _setupFromStorageDelegate() {
+  setupFromStorageDelegate() {
     const keyFromStorage = this.storageDelegate.get('apiKey')
     if (!!keyFromStorage) {
       this.apikey = keyFromStorage
