@@ -1,6 +1,6 @@
 {
   "private": false,
-  "version": "4.0.0",
+  "version": "4.0.3",
   "name": "@funct/core",
   "license": "MIT",
   "description": "The shared resources for all the packages for calling the functionary API.",

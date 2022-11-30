@@ -1,3 +1,6 @@
+import { IStorageDelegate } from './StorageDelegate'
+export { BrowserStorageDelegate, ServerStorageDelegate } from './StorageDelegate'
+
 /**
  * @interface Interface describing the payload expected by the `identify` API endpoint.
  * See for detailed explination of params => https://docs.functionary.run/identify
@@ -39,110 +42,132 @@ export interface FunctionaryEvent {
   properties?: object
 }
 
-type FunctionaryOptions = { surface: 'server'; httpHandler: any } | { surface: 'browser' }
-
 /**
- * Creates a new Functionary object.
+ * Describes a Functionary object.
  *
- * @constructor
+ * @interface
  */
-export class Functionary {
-  private _apikey: string | null = null
-  private _baseURL: string = 'https://functionary.run/api/v1/'
-  private _prefix: string = 'functionary'
-  private _opts: FunctionaryOptions
-
-  private _debug: string = 'false'
-
-  constructor(opts: FunctionaryOptions) {
-    this._opts = opts
-
-    try {
-      if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY) {
-        this._apikey = process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY
-      } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_API_KEY) {
-        this._apikey = process.env.FUNCTIONARY_API_KEY
-        //@ts-ignore Remix was for doing front-end env vars
-      } else if (!!window && !!window.env && !!window.env.FUNCTIONARY_API_KEY) {
-        //@ts-ignore Remix was for doing front-end env vars
-        this._apikey = window.env.FUNCTIONARY_API_KEY
-      }
-
-      if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG) {
-        this._debug = process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG
-      } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_DEBUG) {
-        this._debug = process.env.FUNCTIONARY_DEBUG
-        //@ts-ignore Remix was for doing front-end env vars
-      } else if (!!window && !!window.env && !!window.env.FUNCTIONARY_DEBUG) {
-        //@ts-ignore Remix was for doing front-end env vars
-        this._debug = window.env.FUNCTIONARY_DEBUG
-      }
-    } catch (e) {}
-  }
-
-  private get httpHandler() {
-    switch (this._opts.surface) {
-      case 'server':
-        return this._opts.httpHandler
-      case 'browser':
-        if (!!window && !!window.fetch) {
-          return window.fetch
-        } else {
-          console.error('FUNCTIONARY: Cannot find fetch function on window.')
-        }
-    }
-  }
-
-  /**
-   * @function setBaseUrl - Define the base url for sending the identify and event calls.
-   *
-   * @param {string} url - url formatted as '(https|http)://{{domain}}.{{TLD}}/', for example, http://example.com/
-   */
-  setBaseUrl(url: string): void {
-    this._baseURL = url
-    if (this._opts.surface === 'browser') {
-      this.setLS('baseURL', this._baseURL)
-    }
-  }
-
-  get baseURL(): string | null {
-    if (this._opts.surface === 'browser') {
-      const potentialbaseURL = this.getLS('baseURL')
-      if (!!potentialbaseURL) {
-        this._baseURL = potentialbaseURL
-        return this._baseURL
-      }
-    }
-    return this._baseURL
-  }
-
+export interface Functionary {
   /**
    * @function setApiKey - set the API Key for your functionary workspace.
    *
    * @param {string} apiKey - api key as a string
    */
+  setApiKey: (apiKey: string) => void
+  /**
+   * @function identify - calls the identify endpoint of Functionary.
+   *
+   * @param {FunctionaryIdentify} payload - The payload of the Functionary identify POST request.
+   * See the FunctionaryIdentify interface for typing infor ->
+   * `import { FunctionaryIdentify } from "@funct/core"`.
+   */
+  identify: (payload: FunctionaryIdentify) => Promise<void>
+  /**
+   * @function event - calls the identify endpoint of Functionary.
+   *
+   * @param {FunctionaryEvent} payload - The payload of the Functionary event POST request. See the
+   * FunctionaryEvent interface for typing infor -> `import { FunctionaryEvent } from "@funct/core"`.
+   */
+  event: (payload: FunctionaryEvent) => Promise<void>
+  /**
+   * @function setBaseUrl - Define the base url for sending the identify and event calls.
+   *
+   * @param {string} url - url formatted as '(https|http)://{{domain}}.{{TLD}}/', for example, http://example.com/
+   */
+  setBaseUrl(url: string): void
+}
+
+export abstract class BaseFunctionary implements Functionary {
+  private _apikey: string | null = null
+  private _baseURL: string = 'https://functionary.run/api/v1/'
+
+  private _debug: string = 'false'
+
+  private storageDelegate: IStorageDelegate
+  private httpHandler: (...args: any[]) => Promise<any>
+
+  constructor(storageDelegate: IStorageDelegate, httpHandler: (...args: any[]) => Promise<any>) {
+    this.storageDelegate = storageDelegate
+    this.httpHandler = httpHandler
+
+    this.setup()
+  }
+
+  setBaseUrl(url: string): void {
+    this.baseURL = url
+  }
+
   setApiKey(apiKey: string): void {
-    this._apikey = apiKey
-    if (this._opts.surface === 'browser') {
-      this.setLS('apiKey', this._apikey)
+    this.apikey = apiKey
+  }
+
+  async identify(payload: FunctionaryIdentify): Promise<void> {
+    await this._call({ endpoint: 'identify', payload })
+  }
+
+  async event(payload: FunctionaryEvent): Promise<void> {
+    await this._call({ endpoint: 'event', payload })
+  }
+
+  get baseURL(): string {
+    return this._baseURL
+  }
+
+  set baseURL(url: string) {
+    this._baseURL = url
+    this.storageDelegate.set('baseURL', url)
+  }
+
+  private setup() {
+    this._setupFromStorageDelegate()
+
+    if (this.apikeyExists()) {
+      if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY) {
+        this.apikey = process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY
+      } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_API_KEY) {
+        this.apikey = process.env.FUNCTIONARY_API_KEY
+      }
+    }
+
+    if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG) {
+      this._debug = process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG
+    } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_DEBUG) {
+      this._debug = process.env.FUNCTIONARY_DEBUG
     }
   }
 
+  private _setupFromStorageDelegate() {
+    const keyFromStorage = this.storageDelegate.get('apiKey')
+    if (!!keyFromStorage) {
+      this.apikey = keyFromStorage
+    }
+
+    const baseURLFromStorage = this.storageDelegate.get('baseURL')
+    if (!!baseURLFromStorage) {
+      this.baseURL = baseURLFromStorage
+    }
+  }
+
+  apikeyExists(): boolean {
+    return !!this._apikey
+  }
+
   get apikey(): string | null {
-    if (!!this._apikey) {
+    if (this.apikeyExists()) {
       return this._apikey
+    } else {
+      return null
     }
-    if (this._opts.surface === 'browser') {
-      const potentialKey = this.getLS('apiKey')
-      if (!!potentialKey) {
-        this._apikey = potentialKey
-        return this._apikey
-      }
+  }
+
+  set apikey(key: string | null) {
+    if (key) {
+      this._apikey = key
+      this.storageDelegate.set('apiKey', key)
+    } else {
+      this._apikey = null
+      this.storageDelegate.remove('apiKey')
     }
-    console.error(
-      'FUNCTIONARY: Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY',
-    )
-    return null
   }
 
   private _log(toLog: unknown) {
@@ -157,7 +182,7 @@ export class Functionary {
       | { endpoint: 'event'; payload: FunctionaryEvent },
   ) {
     const { endpoint, payload } = requestOpts
-    if (this.apikey) {
+    if (this.apikeyExists()) {
       try {
         const resp = await this.httpHandler(`${this.baseURL}${endpoint}`, {
           method: 'POST',
@@ -172,48 +197,10 @@ export class Functionary {
         this._log(err)
       }
       return
+    } else {
+      console.error(
+        'FUNCTIONARY: Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY',
+      )
     }
-  }
-
-  /**
-   * @function identify - calls the identify endpoint of Functionary.
-   *
-   * @param {FunctionaryIdentify} payload - The payload of the Functionary identify POST request.
-   * See the FunctionaryIdentify interface for typing infor ->
-   * `import { FunctionaryIdentify } from "@funct/core"`.
-   */
-  async identify(payload: FunctionaryIdentify): Promise<void> {
-    await this._call({ endpoint: 'identify', payload })
-  }
-
-  /**
-   * @function event - calls the identify endpoint of Functionary.
-   *
-   * @param {FunctionaryEvent} payload - The payload of the Functionary event POST request. See the
-   * FunctionaryEvent interface for typing infor -> `import { FunctionaryEvent } from "@funct/core"`.
-   */
-  async event(payload: FunctionaryEvent): Promise<void> {
-    await this._call({ endpoint: 'event', payload })
-  }
-
-  /**
-   *
-   * Local Storage Wrappers
-   *
-   */
-  private getLS(key: string): string | null {
-    const prefixedKey = `${this._prefix}-${key}`
-    return localStorage.getItem(prefixedKey)
-  }
-  private setLS(key: string, value: string): void {
-    const prefixedKey = `${this._prefix}-${key}`
-    localStorage.setItem(prefixedKey, value)
-  }
-  private removeLS(key: string): void {
-    const prefixedKey = `${this._prefix}-${key}`
-    localStorage.removeItem(prefixedKey)
-  }
-  private clear() {
-    localStorage.clear()
   }
 }
