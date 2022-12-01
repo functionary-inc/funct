@@ -7,8 +7,7 @@
     "build": "tsc --build",
     "build:watch": "tsc --build --watch",
     "format": "prettier --write \"src/**/*.ts\" ",
-    "lint": "tslint -p tsconfig.json",
-    "test": "NODE_ENV=\"test\" jest --"
+    "lint": "tslint -p tsconfig.json"
   },
   "jest": {
     "preset": "ts-jest",
