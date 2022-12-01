@@ -1,8 +1,8 @@
 {
   "private": false,
   "version": "4.0.5",
-  "name": "@funct/react",
-  "description": "A client library for calling the functionary API.",
+  "name": "@funct/node",
+  "description": "A node library for calling the functionary API.",
   "scripts": {
     "build": "tsc --build",
     "build:watch": "tsc --build --watch",
@@ -30,7 +30,5 @@
   "dependencies": {
     "@funct/core": "^4.0.5"
   },
-  "devDependencies": {
-    "@types/react": "^18.0.25"
-  }
+  "devDependencies": {}
 }

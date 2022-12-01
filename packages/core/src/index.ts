@@ -1,3 +1,4 @@
+import axios, { AxiosResponse } from 'axios'
 import { IStorageDelegate } from './StorageDelegate'
 export { BrowserStorageDelegate, ServerStorageDelegate } from './StorageDelegate'
 
@@ -72,23 +73,24 @@ export interface Functionary {
   /**
    * @function setBaseUrl - Define the base url for sending the identify and event calls.
    *
-   * @param {string} url - url formatted as '(https|http)://{{domain}}.{{TLD}}/', for example, http://example.com/
+   * @param {string} url - url formatted as '(https|http)://{{domain}}.{{TLD}}', for example, http://example.com
    */
   setBaseUrl(url: string): void
 }
 
 export abstract class BaseFunctionary implements Functionary {
   private _apikey: string | null = null
-  private _baseURL: string = 'https://functionary.run/api/v1/'
+  private _baseURL: string = 'https://functionary.run/api/v1'
 
   private _debug: string = 'false'
+  private _shouldStub: boolean = false
 
   private storageDelegate: IStorageDelegate
-  private httpHandler: (...args: any[]) => Promise<any>
 
-  constructor(storageDelegate: IStorageDelegate, httpHandler: (...args: any[]) => Promise<any>) {
+  constructor(storageDelegate: IStorageDelegate, opts: { stub: boolean }) {
+    this._shouldStub = opts.stub
+
     this.storageDelegate = storageDelegate
-    this.httpHandler = httpHandler
 
     this.setupFromEnv()
   }
@@ -101,12 +103,12 @@ export abstract class BaseFunctionary implements Functionary {
     this.apikey = apiKey
   }
 
-  async identify(payload: FunctionaryIdentify): Promise<void> {
-    await this._call({ endpoint: 'identify', payload })
+  identify(payload: FunctionaryIdentify): Promise<void> {
+    return this._call({ endpoint: '/identify', payload })
   }
 
-  async event(payload: FunctionaryEvent): Promise<void> {
-    await this._call({ endpoint: 'event', payload })
+  event(payload: FunctionaryEvent): Promise<void> {
+    return this._call({ endpoint: '/event', payload })
   }
 
   get baseURL(): string {
@@ -166,37 +168,71 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  private _log(toLog: unknown) {
+  private _log(message: string, type: 'error' | 'warning' | 'normal' = 'normal') {
     if (this._debug === 'true') {
-      console.log(`FUNCTIONARY: ${JSON.stringify(toLog)}`)
+      switch (type) {
+        case 'error':
+          console.error(`[FUNCTIONARY ERROR] ${message}`)
+        case 'warning':
+          console.warn(`[Functionary] ${message}`)
+        default:
+          console.log(`[Functionary] ${message}`)
+      }
     }
   }
 
-  private async _call(
+  private _call(
     requestOpts:
-      | { endpoint: 'identify'; payload: FunctionaryIdentify }
-      | { endpoint: 'event'; payload: FunctionaryEvent },
-  ) {
-    const { endpoint, payload } = requestOpts
+      | { endpoint: '/identify'; payload: FunctionaryIdentify }
+      | { endpoint: '/event'; payload: FunctionaryEvent },
+  ): Promise<void> {
     if (this.apikeyExists()) {
-      try {
-        const resp = await this.httpHandler(`${this.baseURL}${endpoint}`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${this.apikey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
+      return this._http(requestOpts)
+        .then(resp => {
+          this._log(`${requestOpts.endpoint} response: ${resp.status} ${JSON.stringify(resp.data)}`)
         })
-        this._log(await resp.json())
-      } catch (err) {
-        this._log(err)
-      }
-      return
+        .catch(err => {
+          const mess = (err as Error).message || 'There was an error'
+          this._log(`${requestOpts.endpoint} response: ${mess}`, 'error')
+        })
     } else {
       console.error(
         'FUNCTIONARY: Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY',
       )
+      return Promise.resolve()
+    }
+  }
+
+  private _http(
+    requestOpts:
+      | { endpoint: '/identify'; payload: FunctionaryIdentify }
+      | { endpoint: '/event'; payload: FunctionaryEvent },
+  ): Promise<AxiosResponse<any>> {
+    const { endpoint, payload } = requestOpts
+    if (this._shouldStub) {
+      return Promise.resolve({
+        data: {},
+        status: 200,
+        statusText: '',
+        headers: {},
+        config: {
+          method: 'POST',
+          baseURL: this.baseURL,
+          headers: {
+            Authorization: `Bearer ${this.apikey}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      })
+    } else {
+      return axios.post(`${endpoint}`, payload, {
+        method: 'POST',
+        baseURL: this.baseURL,
+        headers: {
+          Authorization: `Bearer ${this.apikey}`,
+          'Content-Type': 'application/json',
+        },
+      })
     }
   }
 }

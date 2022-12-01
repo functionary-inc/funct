@@ -1,5 +1,6 @@
 {
-  "private": false,
+  "private": true,
+  "version": "4.0.5",
   "name": "funct",
   "scripts": {
     "lint": "lerna run --parallel lint --",
@@ -43,6 +44,5 @@
     "tslint": "^6.1.3",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^4.9.3"
-  },
-  "version": "4.0.4"
+  }
 }

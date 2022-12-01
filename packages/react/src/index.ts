@@ -9,9 +9,9 @@ export { FunctionaryIdentify, FunctionaryEvent, Functionary } from '@funct/core'
 import { useCallback, useEffect, useMemo } from 'react'
 
 class ReactFunctionary extends BaseFunctionary {
-  constructor() {
+  constructor(opts: { stub: boolean }) {
     const storageDelegate = new BrowserStorageDelegate()
-    super(storageDelegate, fetch)
+    super(storageDelegate, opts)
   }
 }
 
@@ -29,9 +29,9 @@ class ReactFunctionary extends BaseFunctionary {
  * @function setBaseUrl - Define the base url for sending the identify and event calls.
  *
  */
-export const useFunctionary = (): Functionary => {
+export const useFunctionary = (on: boolean = true): Functionary => {
   const functionary = useMemo<ReactFunctionary>(() => {
-    return new ReactFunctionary()
+    return new ReactFunctionary({ stub: !on })
   }, [])
 
   useEffect(() => {
