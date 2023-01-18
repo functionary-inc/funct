@@ -1,5 +1,5 @@
 import { BaseFunctionary, Functionary as IFunctionary, ServerStorageDelegate } from '@funct/core'
-export { FunctionaryIdentify, FunctionaryEvent } from '@funct/core'
+export { FunctionaryIdentify, FunctionaryState } from '@funct/core'
 
 /**
  * Describes a Functionary object.

@@ -29,8 +29,5 @@
   "license": "MIT",
   "dependencies": {
     "@funct/core": "^4.0.5"
-  },
-  "devDependencies": {
-    "@types/react": "^18.0.25"
   }
 }

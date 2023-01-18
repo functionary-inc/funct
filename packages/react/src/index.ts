@@ -3,9 +3,9 @@ import {
   BrowserStorageDelegate,
   FunctionaryIdentify,
   Functionary,
-  FunctionaryEvent,
+  FunctionaryState,
 } from '@funct/core'
-export { FunctionaryIdentify, FunctionaryEvent, Functionary } from '@funct/core'
+export { FunctionaryIdentify, FunctionaryState, Functionary } from '@funct/core'
 import { useCallback, useEffect, useMemo } from 'react'
 
 class ReactFunctionary extends BaseFunctionary {
@@ -39,7 +39,7 @@ export const useFunctionary = (on: boolean = true): Functionary => {
   }, [functionary])
 
   const event = useCallback(
-    async (payload: FunctionaryEvent) => {
+    async (payload: FunctionaryState) => {
       await functionary.event(payload)
     },
     [functionary],

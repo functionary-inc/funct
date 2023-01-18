@@ -17,7 +17,7 @@ export interface FunctionaryIdentify {
   ids: (string | number)[]
   properties?: object
   childIds?: (string | number)[]
-  parentId: (string | number)
+  parentId: string | number
 }
 
 /**
@@ -34,7 +34,6 @@ export interface FunctionaryState {
   ts: number
   properties?: object
 }
-
 
 /**
  * @interface FunctionaryStatesPayload - Interface describing the payload expected by the `events` endpoint.

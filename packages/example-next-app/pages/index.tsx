@@ -1,11 +1,15 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from '@next/font/google'
-import styles from '@/styles/Home.module.css'
+import styles from 'styles/Home.module.css'
+// calling directly into the package to have autoreload
+// since this is only for dev it's fine
+// import { tempdjskdufe33 } from "../../react/lib"
 
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
+
   return (
     <>
       <Head>
