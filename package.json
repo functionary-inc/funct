@@ -6,7 +6,7 @@
     "lint": "lerna run --parallel lint --",
     "format": "lerna run --parallel format --",
     "setup:dev:create": "scripts/postCreate",
-    "build": "lerna run --parallel build --",
+    "build": "lerna run build --include-dependencies --stream  --",
     "build:watch": "lerna run --parallel build:watch --",
     "lerna:publish": "lerna run --parallel build && lerna publish --",
     "test": "lerna run test --",

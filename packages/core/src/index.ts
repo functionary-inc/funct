@@ -8,39 +8,47 @@ export { BrowserStorageDelegate, ServerStorageDelegate } from './StorageDelegate
  *
  * @param {string} model - __REQUIRED__ the name of the model type for the object being identified
  * @param {(string | number)[]} ids - __REQUIRED__ list of ids to identify the model
- * @param {string} [displayName] - the name to be displayed to identify the model
- * @param {Object} [properties] - list of properties to add to the object
- * @param {(string | number)[]} [childIds] - ids to assign a child to the model being identified
- * @param {string} [childModel] - model type of the a child being assigned
- * @param {(string | number)[]} [parentIds] - ids to assign a parent to the model being identified
- * @param {string} [parentModel] - model type of the a child being assigned
+ * @param {Object} [properties] - list of properties to add to the entity
+ * @param {(string | number)[]} [childIds] - ids to assign a child to the entity being identified
+ * @param {(string | number)} [parentId] - id to assign a parent to the entity being identified
  */
 export interface FunctionaryIdentify {
   model: string
   ids: (string | number)[]
-  displayName?: string
   properties?: object
   childIds?: (string | number)[]
-  childModel?: string
-  parentIds?: (string | number)[]
-  parentModel?: string
+  parentId: (string | number)
 }
 
 /**
- * @interface FunctionaryEvent - Interface describing the payload expected by the `events` endpoint.
+ * @interface FunctionaryState - Interface describing the a `event` to be sent in a `event` payload.
  * See for detailed explination of params => https://docs.functionary.run/events
  *
- * @param {string} name - __REQUIRED__ the name event for the model.
- * @param {(string | number)[]} ids - __REQUIRED__ list of ids to identify the model
- * @param {string} [model] - the name of the model type for the object.  This is optional, but you should include it if you have it, because it prevents ID clashes across models.
+ * @param {string} name - __REQUIRED__ the name event.
+ * @param {string} ts - __REQUIRED__ the timestamp of the event.
  * @param {Object} [properties] - list of properties to add to the object
  *
  */
-export interface FunctionaryEvent {
+export interface FunctionaryState {
   name: string
-  ids: (string | number)[]
-  model?: string
+  ts: number
   properties?: object
+}
+
+
+/**
+ * @interface FunctionaryStatesPayload - Interface describing the payload expected by the `events` endpoint.
+ * See for detailed explination of params => https://docs.functionary.run/events
+ *
+ * @param {(string | number)[]} ids - __REQUIRED__ list of ids to identify the model
+ * @param {string} [model] - the name of the model type for the object.  This is optional, but you should include it if you have it, because it prevents ID clashes across models.
+ * @param {FunctionaryState[]} [states] - list of states to be sent in the payload
+ *
+ */
+export interface FunctionaryStatePayload {
+  ids: (string | number)[]
+  model: string
+  states?: FunctionaryState[]
 }
 
 /**
@@ -69,7 +77,7 @@ export interface Functionary {
    * @param {FunctionaryEvent} payload - The payload of the Functionary event POST request. See the
    * FunctionaryEvent interface for typing infor -> `import { FunctionaryEvent } from "@funct/core"`.
    */
-  event: (payload: FunctionaryEvent) => Promise<void>
+  event: (payload: FunctionaryState) => Promise<void>
   /**
    * @function setBaseUrl - Define the base url for sending the identify and event calls.
    *
@@ -103,13 +111,40 @@ export abstract class BaseFunctionary implements Functionary {
     this.apikey = apiKey
   }
 
+  // setEntity(entity: { model: string; ids: (string | number)[] }): void {
+  //   this.entity = entity
+  // }
+
+  // get entity(): string | null {
+  //   if (this.apikeyExists()) {
+  //     return this.entity
+  //   } else {
+  //     return null
+  //   }
+  // }
+
+  // set entity(key: string | null) {
+  //   if (key) {
+  //     this._apikey = key
+  //     this.storageDelegate.set('apiKey', key)
+  //   } else {
+  //     this._apikey = null
+  //     this.storageDelegate.remove('apiKey')
+  //   }
+  // }
+
   identify(payload: FunctionaryIdentify): Promise<void> {
     return this._call({ endpoint: '/identify', payload })
   }
 
-  event(payload: FunctionaryEvent): Promise<void> {
-    return this._call({ endpoint: '/event', payload })
+  event(payload: FunctionaryState): Promise<void> {
+    return Promise.resolve()
+    // return this._call({ endpoint: '/event', payload })
   }
+
+  // async eventTicker() {
+  //   setInterval(await this._call({ endpoint: '/event', payload }), 30000)
+  // }
 
   get baseURL(): string {
     return this._baseURL
@@ -184,7 +219,7 @@ export abstract class BaseFunctionary implements Functionary {
   private _call(
     requestOpts:
       | { endpoint: '/identify'; payload: FunctionaryIdentify }
-      | { endpoint: '/event'; payload: FunctionaryEvent },
+      | { endpoint: '/event'; payload: FunctionaryStatePayload },
   ): Promise<void> {
     if (this.apikeyExists()) {
       return this._http(requestOpts)
@@ -206,7 +241,7 @@ export abstract class BaseFunctionary implements Functionary {
   private _http(
     requestOpts:
       | { endpoint: '/identify'; payload: FunctionaryIdentify }
-      | { endpoint: '/event'; payload: FunctionaryEvent },
+      | { endpoint: '/event'; payload: FunctionaryStatePayload },
   ): Promise<AxiosResponse<any>> {
     const { endpoint, payload } = requestOpts
     if (this._shouldStub) {

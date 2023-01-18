@@ -34,7 +34,7 @@
   // "forwardPorts": [3306, 9000, 8123, 2181, 9092, 2022],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  // "postCreateCommand": "yarn setup:dev:create",
+  "postCreateCommand": "yarn setup:dev:create",
 
   // Use 'postStartCommand' to run commands after the container is started.
   // "postStartCommand": "yarn setup:dev:start",

@@ -1,4 +1,6 @@
 #!/bin/bash
 
+npm i -g lerna
+
 yarn install
 yarn prepare
