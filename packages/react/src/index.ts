@@ -1,6 +1,6 @@
 import {
   BaseFunctionary,
-  BrowserStorageDelegate,
+  BrowserSurfaceDelegate,
   FunctionaryIdentify,
   Functionary,
   FunctionaryState,
@@ -9,8 +9,8 @@ export { FunctionaryIdentify, FunctionaryState, Functionary } from '@funct/core'
 import { useCallback, useEffect, useMemo } from 'react'
 
 class ReactFunctionary extends BaseFunctionary {
-  constructor(opts: { stub: boolean }) {
-    const storageDelegate = new BrowserStorageDelegate()
+  constructor(opts: { stub: boolean, debug: boolean }) {
+    const storageDelegate = new BrowserSurfaceDelegate()
     super(storageDelegate, opts)
   }
 }
@@ -29,13 +29,14 @@ class ReactFunctionary extends BaseFunctionary {
  * @function setBaseUrl - Define the base url for sending the identify and event calls.
  *
  */
-export const useFunctionary = (on: boolean = true): Functionary => {
+export const useFunctionary = (opts?: { on?: boolean, debug?: boolean }): Functionary => {
   const functionary = useMemo<ReactFunctionary>(() => {
-    return new ReactFunctionary({ stub: !on })
+    const { on = true, debug = false } = opts || {}
+    return new ReactFunctionary({ stub: !on,  debug })
   }, [])
 
   useEffect(() => {
-    functionary.setupFromStorageDelegate()
+    functionary.setupFromSurfaceDelegate()
   }, [functionary])
 
   const event = useCallback(

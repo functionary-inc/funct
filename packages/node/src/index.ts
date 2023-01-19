@@ -1,4 +1,4 @@
-import { BaseFunctionary, Functionary as IFunctionary, ServerStorageDelegate } from '@funct/core'
+import { BaseFunctionary, Functionary as IFunctionary, NodeSurfaceDelegate } from '@funct/core'
 export { FunctionaryIdentify, FunctionaryState } from '@funct/core'
 
 /**
@@ -22,19 +22,17 @@ export { FunctionaryIdentify, FunctionaryState } from '@funct/core'
  * ```
  */
 export class Functionary extends BaseFunctionary implements IFunctionary {
-  constructor(opts?: { apikey?: string; on?: boolean }) {
-    const storageDelegate = new ServerStorageDelegate()
+  constructor(opts?: { apikey?: string; on?: boolean; debug?: boolean }) {
+    const storageDelegate = new NodeSurfaceDelegate()
 
-    if (opts && opts.on) {
-      super(storageDelegate, { stub: !opts.on })
-    } else {
-      super(storageDelegate, { stub: false })
-    }
+    const { on = true, debug = false, apikey } = opts || {}
 
-    this.setupFromStorageDelegate()
+    super(storageDelegate, { stub: on, debug })
 
-    if (opts && opts.apikey) {
-      this.apikey = opts.apikey
+    this.setupFromSurfaceDelegate()
+
+    if (apikey) {
+      this.apikey = apikey
     }
   }
 }

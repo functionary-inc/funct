@@ -31,7 +31,7 @@
   ],
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [3306, 9000, 8123, 2181, 9092, 2022],
+  "forwardPorts": [3002, 3000],
 
   // Use 'postCreateCommand' to run commands after the container is created.
   "postCreateCommand": "yarn setup:dev:create",
@@ -45,24 +45,12 @@
 
   // https://code.visualstudio.com/docs/remote/devcontainerjson-reference#_formatting-string-vs-array-properties
   "portsAttributes": {
-    // "9000": {
-    //   "label": "tcp-clickhouse"
-    // },
-    // "3306": {
-    //   "label": "mysql"
-    // },
-    // "8123": {
-    //   "label": "http-clickhouse"
-    // },
-    // "2181": {
-    //   "label": "zookeeper"
-    // },
-    // "9092": {
-    //   "label": "kafka"
-    // },
-    // "2022": {
-    //   "label": "cloudflared"
-    // }
+    "3002": {
+      "label": "example-express"
+    },
+    "3000": {
+      "label": "example-next"
+    }
   },
 
   "features": {

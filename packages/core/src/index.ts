@@ -1,6 +1,8 @@
 import axios, { AxiosResponse } from 'axios'
-import { IStorageDelegate } from './StorageDelegate'
-export { BrowserStorageDelegate, ServerStorageDelegate } from './StorageDelegate'
+import { ISurfaceDelegate } from './SurfaceDelegate'
+export { NodeSurfaceDelegate, BrowserSurfaceDelegate } from './SurfaceDelegate'
+import throttle from "lodash.throttle"
+import { DebouncedFunc } from 'lodash'
 
 /**
  * @interface Interface describing the payload expected by the `identify` API endpoint.
@@ -17,7 +19,7 @@ export interface FunctionaryIdentify {
   ids: (string | number)[]
   properties?: object
   childIds?: (string | number)[]
-  parentId: string | number
+  parentId?: string | number
 }
 
 /**
@@ -89,15 +91,19 @@ export abstract class BaseFunctionary implements Functionary {
   private _apikey: string | null = null
   private _baseURL: string = 'https://functionary.run/api/v1'
 
-  private _debug: string = 'false'
-  private _shouldStub: boolean = false
+  private _debug: boolean
+  private _shouldStub: boolean
 
-  private storageDelegate: IStorageDelegate
+  private surfaceDelegate: ISurfaceDelegate
 
-  constructor(storageDelegate: IStorageDelegate, opts: { stub: boolean }) {
-    this._shouldStub = opts.stub
+  constructor(surfaceDelegate: ISurfaceDelegate,  opts?: { stub: boolean, debug: boolean }) {
 
-    this.storageDelegate = storageDelegate
+    const { stub = false, debug = false} = opts || {}
+
+    this._shouldStub = stub
+    this._debug = debug
+
+    this.surfaceDelegate = surfaceDelegate
 
     this.setupFromEnv()
   }
@@ -106,78 +112,17 @@ export abstract class BaseFunctionary implements Functionary {
     this.baseURL = url
   }
 
-  setApiKey(apiKey: string): void {
-    this.apikey = apiKey
-  }
-
-  // setEntity(entity: { model: string; ids: (string | number)[] }): void {
-  //   this.entity = entity
-  // }
-
-  // get entity(): string | null {
-  //   if (this.apikeyExists()) {
-  //     return this.entity
-  //   } else {
-  //     return null
-  //   }
-  // }
-
-  // set entity(key: string | null) {
-  //   if (key) {
-  //     this._apikey = key
-  //     this.storageDelegate.set('apiKey', key)
-  //   } else {
-  //     this._apikey = null
-  //     this.storageDelegate.remove('apiKey')
-  //   }
-  // }
-
-  identify(payload: FunctionaryIdentify): Promise<void> {
-    return this._call({ endpoint: '/identify', payload })
-  }
-
-  event(payload: FunctionaryState): Promise<void> {
-    return Promise.resolve()
-    // return this._call({ endpoint: '/event', payload })
-  }
-
-  // async eventTicker() {
-  //   setInterval(await this._call({ endpoint: '/event', payload }), 30000)
-  // }
-
   get baseURL(): string {
     return this._baseURL
   }
 
   set baseURL(url: string) {
     this._baseURL = url
-    this.storageDelegate.set('baseURL', url)
+    this.surfaceDelegate.set('baseURL', url)
   }
 
-  setupFromEnv() {
-    if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY) {
-      this._apikey = process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY
-    } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_API_KEY) {
-      this._apikey = process.env.FUNCTIONARY_API_KEY
-    }
-
-    if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG) {
-      this._debug = process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG
-    } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_DEBUG) {
-      this._debug = process.env.FUNCTIONARY_DEBUG
-    }
-  }
-
-  setupFromStorageDelegate() {
-    const keyFromStorage = this.storageDelegate.get('apiKey')
-    if (!!keyFromStorage) {
-      this.apikey = keyFromStorage
-    }
-
-    const baseURLFromStorage = this.storageDelegate.get('baseURL')
-    if (!!baseURLFromStorage) {
-      this.baseURL = baseURLFromStorage
-    }
+  setApiKey(apiKey: string): void {
+    this.apikey = apiKey
   }
 
   apikeyExists(): boolean {
@@ -195,22 +140,84 @@ export abstract class BaseFunctionary implements Functionary {
   set apikey(key: string | null) {
     if (key) {
       this._apikey = key
-      this.storageDelegate.set('apiKey', key)
+      this.surfaceDelegate.set('apiKey', key)
     } else {
       this._apikey = null
-      this.storageDelegate.remove('apiKey')
+      this.surfaceDelegate.remove('apiKey')
     }
   }
 
+  // setCustomer(id:string){
+
+  // }
+
+  // tick(): DebouncedFunc<() => Promise<void>> {
+  //   return throttle(async () => { console.log(BaseFunctionary._statePayloads) }, 2000)
+  // }
+
+  identify(payload: Omit<FunctionaryIdentify, "parentId" | "childIds">): Promise<void> {
+    if(payload.model !== "customer" && payload.model !== "organization"){
+      console.error(`[FUNCTIONARY ERROR] functionary can only accept "organization" or "customer" as a model type.`)
+      return Promise.reject(`[FUNCTIONARY ERROR] functionary can only accept "organization" or "customer" as a model type.`)
+    }
+
+    return this._call({ endpoint: '/identify', payload })
+  }
+
+  // firstEvent
+  // firstIdentify
+
+  // static _statePayloads  = "TEST"
+  // static _identifyPayloads  = "TEST"
+
+  event(payload: FunctionaryState): Promise<void> {
+    return Promise.resolve()
+    // return this._call({ endpoint: '/event', payload })
+  }
+
+
+  // async eventTicker() {
+  //   setInterval(await this._call({ endpoint: '/event', payload }), 30000)
+  // }
+
+  setupFromEnv() {
+    if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY) {
+      this._apikey = process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY
+    } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_API_KEY) {
+      this._apikey = process.env.FUNCTIONARY_API_KEY
+    }
+
+    if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG) {
+      this._debug = process.env.NEXT_PUBLIC_FUNCTIONARY_DEBUG === 'true'
+    } else if (!!process && !!process.env && !!process.env.FUNCTIONARY_DEBUG) {
+      this._debug = process.env.FUNCTIONARY_DEBUG === 'true'
+    }
+  }
+
+  setupFromSurfaceDelegate() {
+    // this.surfaceDelegate.setupClock(this.throttle)
+
+    const keyFromSurface = this.surfaceDelegate.get('apiKey')
+    if (!!keyFromSurface) {
+      this.apikey = keyFromSurface
+    }
+
+    const baseURLFromSurface = this.surfaceDelegate.get('baseURL')
+    if (!!baseURLFromSurface) {
+      this.baseURL = baseURLFromSurface
+    }
+  }
+
+
   private _log(message: string, type: 'error' | 'warning' | 'normal' = 'normal') {
-    if (this._debug === 'true') {
+    if (this._debug) {
       switch (type) {
         case 'error':
           console.error(`[FUNCTIONARY ERROR] ${message}`)
         case 'warning':
-          console.warn(`[Functionary] ${message}`)
+          console.warn(`[FUNCTIONARY] ${message}`)
         default:
-          console.log(`[Functionary] ${message}`)
+          console.log(`[FUNCTIONARY] ${message}`)
       }
     }
   }
@@ -218,7 +225,7 @@ export abstract class BaseFunctionary implements Functionary {
   private _call(
     requestOpts:
       | { endpoint: '/identify'; payload: FunctionaryIdentify }
-      | { endpoint: '/event'; payload: FunctionaryStatePayload },
+      | { endpoint: '/event'; payload: FunctionaryStatePayload[] },
   ): Promise<void> {
     if (this.apikeyExists()) {
       return this._http(requestOpts)
@@ -240,7 +247,7 @@ export abstract class BaseFunctionary implements Functionary {
   private _http(
     requestOpts:
       | { endpoint: '/identify'; payload: FunctionaryIdentify }
-      | { endpoint: '/event'; payload: FunctionaryStatePayload },
+      | { endpoint: '/event'; payload: FunctionaryStatePayload[] },
   ): Promise<AxiosResponse<any>> {
     const { endpoint, payload } = requestOpts
     if (this._shouldStub) {
