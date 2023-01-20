@@ -5,11 +5,13 @@ import styles from 'styles/Home.module.css'
 // calling directly into the package to have autoreload
 // since this is only for dev it's fine
 import { useFunctionary } from '../../react/lib'
+import Link from 'next/link'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
-  const functionary = useFunctionary()
+  const { setApiKey } = useFunctionary()
+  // setApiKey('I AM A FAKE')
 
   return (
     <>
@@ -21,6 +23,17 @@ export default function Home() {
       </Head>
       <main className={styles.main}>
         <div className={styles.description}>
+          <Link href={'/aNewPage'}>
+            <button>Go To NEW PAGE</button>
+          </Link>
+          <button
+            onClick={
+              () => undefined
+              // addEvent({ name: 'test_test', ts: new Date().getTime() }, { ids: ['new-id-hell'], model: 'customer' })
+            }
+          >
+            TEST SOMETHING
+          </button>
           <p>
             Get started by editing&nbsp;
             <code className={styles.code}>pages/index.tsx</code>

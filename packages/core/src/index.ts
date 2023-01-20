@@ -1,11 +1,23 @@
 import axios, { AxiosResponse } from 'axios'
 import { ISurfaceDelegate } from './SurfaceDelegate'
-export { NodeSurfaceDelegate, BrowserSurfaceDelegate } from './SurfaceDelegate'
-import throttle from "lodash.throttle"
+export { BrowserSurfaceDelegate } from './SurfaceDelegate'
+import throttle from 'lodash.throttle'
+import union from 'lodash.union'
 import { DebouncedFunc } from 'lodash'
 
 /**
- * @interface Interface describing the payload expected by the `identify` API endpoint.
+ * @interface FunctionaryEntity describing the minimal properties to identify an entity.
+ *
+ * @param {string} model - __REQUIRED__ the name of the model type for the object being identified
+ * @param {(string | number)[]} ids - __REQUIRED__ list of ids to identify the model
+ */
+export interface FunctionaryEntity {
+  model: string
+  ids: (string | number)[]
+}
+
+/**
+ * @interface FunctionaryIdentify describing the payload expected by the `identify` API endpoint.
  * See for detailed explination of params => https://docs.functionary.run/identify
  *
  * @param {string} model - __REQUIRED__ the name of the model type for the object being identified
@@ -42,14 +54,14 @@ export interface FunctionaryState {
  * See for detailed explination of params => https://docs.functionary.run/events
  *
  * @param {(string | number)[]} ids - __REQUIRED__ list of ids to identify the model
- * @param {string} [model] - the name of the model type for the object.  This is optional, but you should include it if you have it, because it prevents ID clashes across models.
- * @param {FunctionaryState[]} [states] - list of states to be sent in the payload
+ * @param {string} [model] - __REQUIRED__ the name of the model type for the object.
+ * @param {FunctionaryState[]} [states] - __REQUIRED__ list of states to be sent in the payload
  *
  */
 export interface FunctionaryStatePayload {
   ids: (string | number)[]
   model: string
-  states?: FunctionaryState[]
+  states: FunctionaryState[]
 }
 
 /**
@@ -78,7 +90,7 @@ export interface Functionary {
    * @param {FunctionaryEvent} payload - The payload of the Functionary event POST request. See the
    * FunctionaryEvent interface for typing infor -> `import { FunctionaryEvent } from "@funct/core"`.
    */
-  event: (payload: FunctionaryState) => Promise<void>
+  event: (payload: FunctionaryState, model: string) => void
   /**
    * @function setBaseUrl - Define the base url for sending the identify and event calls.
    *
@@ -92,15 +104,19 @@ export abstract class BaseFunctionary implements Functionary {
   private _baseURL: string = 'https://functionary.run/api/v1'
 
   private _debug: boolean
-  private _shouldStub: boolean
+  private _stub: boolean
+  private _fireOnNextEvent: boolean
 
   private surfaceDelegate: ISurfaceDelegate
 
-  constructor(surfaceDelegate: ISurfaceDelegate,  opts?: { stub: boolean, debug: boolean }) {
+  constructor(
+    surfaceDelegate: ISurfaceDelegate,
+    opts?: { stub: boolean; debug: boolean; fireOnInstantiation: boolean },
+  ) {
+    const { stub = false, debug = false, fireOnInstantiation = true } = opts || {}
 
-    const { stub = false, debug = false} = opts || {}
-
-    this._shouldStub = stub
+    this._stub = stub
+    this._fireOnNextEvent = fireOnInstantiation
     this._debug = debug
 
     this.surfaceDelegate = surfaceDelegate
@@ -147,38 +163,71 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  // setCustomer(id:string){
+  private _entityReferenceCache: { [model: string]: string } = {}
 
-  // }
+  setEntityContext(model: string, ids: (string | number)[]): void {
+    if (ids.length === 0) {
+      this._log('ids length must be greater than 0 when calling setEntityContext', 'error')
+    } else {
+      const referenceId = ids[0].toString()
+      this._entityReferenceCache[model] = referenceId
+      this.surfaceDelegate.set(`${model}ReferenceId`, referenceId)
+    }
+  }
 
-  // tick(): DebouncedFunc<() => Promise<void>> {
-  //   return throttle(async () => { console.log(BaseFunctionary._statePayloads) }, 2000)
-  // }
+  getEntityContext(model: string): string | null {
+    if (this._entityReferenceCache.hasOwnProperty(model)) {
+      return this._entityReferenceCache[model]
+    } else {
+      const potentialId = this.surfaceDelegate.get(`${model}ReferenceId`)
+      if (potentialId) {
+        this._entityReferenceCache[model] = potentialId
+        return potentialId
+      } else {
+        return null
+      }
+    }
+  }
 
-  identify(payload: Omit<FunctionaryIdentify, "parentId" | "childIds">): Promise<void> {
-    if(payload.model !== "customer" && payload.model !== "organization"){
-      console.error(`[FUNCTIONARY ERROR] functionary can only accept "organization" or "customer" as a model type.`)
-      return Promise.reject(`[FUNCTIONARY ERROR] functionary can only accept "organization" or "customer" as a model type.`)
+  revokeEntityContext(model: string): void {
+    if (this._entityReferenceCache.hasOwnProperty(model)) {
+      delete this._entityReferenceCache[model]
+    }
+    this.surfaceDelegate.remove(`${model}ReferenceId`)
+  }
+
+  restoreEntityContext(model: string): boolean {
+    const potentialId = this.surfaceDelegate.get(`${model}ReferenceId`)
+    if (potentialId) {
+      this._entityReferenceCache[model] = potentialId
+      return true
+    } else {
+      return false
+    }
+  }
+
+  identify(payload: Omit<FunctionaryIdentify, 'parentId' | 'childIds'>): Promise<void> {
+    if (payload.model !== 'customer' && payload.model !== 'organization') {
+      const errMess = `functionary can only accept "organization" or "customer" as a model type.`
+      this._log(errMess, 'error')
+      return Promise.reject(errMess)
     }
 
     return this._call({ endpoint: '/identify', payload })
   }
 
-  // firstEvent
-  // firstIdentify
-
-  // static _statePayloads  = "TEST"
-  // static _identifyPayloads  = "TEST"
-
-  event(payload: FunctionaryState): Promise<void> {
-    return Promise.resolve()
-    // return this._call({ endpoint: '/event', payload })
+  eventWithEntity(payload: FunctionaryState, entity: FunctionaryEntity): void {
+    this.cacheOrSendEvent(payload, entity)
   }
 
-
-  // async eventTicker() {
-  //   setInterval(await this._call({ endpoint: '/event', payload }), 30000)
-  // }
+  event(payload: FunctionaryState, model: string): void {
+    const knownId = this.getEntityContext(model)
+    if (knownId) {
+      this.cacheOrSendEvent(payload, { model, ids: [knownId] })
+    } else {
+      this._log('Unable to load entity id from context correctly', 'error')
+    }
+  }
 
   setupFromEnv() {
     if (!!process && !!process.env && !!process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY) {
@@ -194,20 +243,19 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  setupFromSurfaceDelegate() {
-    // this.surfaceDelegate.setupClock(this.throttle)
-
+  setupFromSurfaceDelegate(modelsToRestore: string[]) {
     const keyFromSurface = this.surfaceDelegate.get('apiKey')
     if (!!keyFromSurface) {
       this.apikey = keyFromSurface
     }
+
+    modelsToRestore.forEach(model => this.restoreEntityContext(model))
 
     const baseURLFromSurface = this.surfaceDelegate.get('baseURL')
     if (!!baseURLFromSurface) {
       this.baseURL = baseURLFromSurface
     }
   }
-
 
   private _log(message: string, type: 'error' | 'warning' | 'normal' = 'normal') {
     if (this._debug) {
@@ -220,6 +268,57 @@ export abstract class BaseFunctionary implements Functionary {
           console.log(`[FUNCTIONARY] ${message}`)
       }
     }
+  }
+
+  static _stateCache: FunctionaryStatePayload[] = []
+  static _stateCacheCount: number = 0
+  private throttledSendEvents: DebouncedFunc<() => Promise<void>> | undefined
+
+  cacheOrSendEvent(state: FunctionaryState, entity: FunctionaryEntity): void {
+    let eventWasAdded = false
+    for (var entStateInd = 0; entStateInd < BaseFunctionary._stateCache.length; entStateInd++) {
+      const statePayload = BaseFunctionary._stateCache[entStateInd]
+      if (entity.model === statePayload.model) {
+        const statePayloadIds = statePayload.ids
+        for (var entIdInd = 0; entIdInd < statePayloadIds.length; entIdInd++) {
+          const currId = statePayloadIds[entIdInd]
+
+          if (entity.ids.includes(currId)) {
+            BaseFunctionary._stateCache[entStateInd].ids = union(statePayloadIds, entity.ids)
+            BaseFunctionary._stateCache[entStateInd].states.push(state)
+            BaseFunctionary._stateCacheCount++
+
+            eventWasAdded = true
+
+            entIdInd = BaseFunctionary._stateCache[entStateInd].ids.length
+            entStateInd = BaseFunctionary._stateCache.length
+          }
+        }
+      }
+    }
+    if (!eventWasAdded) {
+      BaseFunctionary._stateCacheCount++
+      BaseFunctionary._stateCache.push({
+        model: entity.model,
+        ids: entity.ids,
+        states: [state],
+      })
+    }
+    if (!this.throttledSendEvents) {
+      this.throttledSendEvents = throttle(this.sendEvents, 10000, { leading: false })
+      this.surfaceDelegate.addFlushListeners(this.throttledSendEvents.flush)
+      if (this._fireOnNextEvent || BaseFunctionary._stateCacheCount === 300) {
+        this.throttledSendEvents.flush()
+      }
+    }
+    this.throttledSendEvents()
+  }
+
+  async sendEvents(): Promise<void> {
+    const payload = BaseFunctionary._stateCache
+    BaseFunctionary._stateCache = []
+    BaseFunctionary._stateCacheCount = 0
+    return this._call({ endpoint: '/event', payload })
   }
 
   private _call(
@@ -237,10 +336,10 @@ export abstract class BaseFunctionary implements Functionary {
           this._log(`${requestOpts.endpoint} response: ${mess}`, 'error')
         })
     } else {
-      console.error(
-        'FUNCTIONARY: Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY',
-      )
-      return Promise.resolve()
+      const errMess =
+        'Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY'
+      this._log(errMess, 'error')
+      return Promise.reject(errMess)
     }
   }
 
@@ -250,7 +349,7 @@ export abstract class BaseFunctionary implements Functionary {
       | { endpoint: '/event'; payload: FunctionaryStatePayload[] },
   ): Promise<AxiosResponse<any>> {
     const { endpoint, payload } = requestOpts
-    if (this._shouldStub) {
+    if (this._stub) {
       return Promise.resolve({
         data: {},
         status: 200,
@@ -272,6 +371,8 @@ export abstract class BaseFunctionary implements Functionary {
         headers: {
           Authorization: `Bearer ${this.apikey}`,
           'Content-Type': 'application/json',
+          'X-Timezone-Offset': new Date().getTimezoneOffset() * 60 * 1000,
+          'X-Source': 'client-js',
         },
       })
     }
