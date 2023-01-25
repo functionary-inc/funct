@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 // calling directly into the package to have autoreload
 // since this is only for dev it's fine
-// import { tempdjskdufe33 } from "../node/lib"
+import { funct } from '../node/lib'
 
 const app = express()
 const port = 3002

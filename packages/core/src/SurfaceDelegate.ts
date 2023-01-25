@@ -1,5 +1,3 @@
-import { DebouncedFunc } from 'lodash'
-
 export interface ISurfaceDelegate {
   get: (key: string) => string | null
   set: (key: string, value: string) => void
@@ -23,9 +21,9 @@ export class BrowserSurfaceDelegate implements ISurfaceDelegate {
     return localStorage.getItem(prefixedKey)
   }
   set(key: string, value: string): void {
-    // if (typeof localStorage === 'undefined') {
-    //   return
-    // }
+    if (typeof localStorage === 'undefined') {
+      return
+    }
     const prefixedKey = `${this._prefix}-${key}`
     localStorage.setItem(prefixedKey, value)
   }

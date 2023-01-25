@@ -1,42 +1,58 @@
 import axios, { AxiosResponse } from 'axios'
 import { ISurfaceDelegate } from './SurfaceDelegate'
-export { BrowserSurfaceDelegate } from './SurfaceDelegate'
+export { BrowserSurfaceDelegate, NodeSurfaceDelegate } from './SurfaceDelegate'
 import throttle from 'lodash.throttle'
 import union from 'lodash.union'
 import { DebouncedFunc } from 'lodash'
 
+export type FunctionarySupportedModel = 'customer' | 'organization'
+
 /**
  * @interface FunctionaryEntity describing the minimal properties to identify an entity.
  *
- * @param {string} model - __REQUIRED__ the name of the model type for the object being identified
+ * @param {FunctionarySupportedModel} model - __REQUIRED__ the name of the model type for the object being identified
  * @param {(string | number)[]} ids - __REQUIRED__ list of ids to identify the model
+ * @param {Object} [properties] - list of properties to add to the object
  */
 export interface FunctionaryEntity {
-  model: string
+  model: FunctionarySupportedModel
   ids: (string | number)[]
+  properties?: object
 }
 
 /**
  * @interface FunctionaryIdentify describing the payload expected by the `identify` API endpoint.
  * See for detailed explination of params => https://docs.functionary.run/identify
  *
- * @param {string} model - __REQUIRED__ the name of the model type for the object being identified
+ * @param {FunctionarySupportedModel} model - __REQUIRED__ the name of the model type for the object being identified
  * @param {(string | number)[]} ids - __REQUIRED__ list of ids to identify the model
  * @param {Object} [properties] - list of properties to add to the entity
  * @param {(string | number)[]} [childIds] - ids to assign a child to the entity being identified
  * @param {(string | number)} [parentId] - id to assign a parent to the entity being identified
  */
 export interface FunctionaryIdentify {
-  model: string
+  model: FunctionarySupportedModel
   ids: (string | number)[]
   properties?: object
-  childIds?: (string | number)[]
-  parentId?: string | number
+  children?: Omit<FunctionaryEntity, 'properties'>[]
+  parent?: Omit<FunctionaryEntity, 'properties'>
+}
+
+/**
+ * @interface FunctionaryClientState - Interface describing the a `event` to defined by the client be sent in a `event` payload.
+ * See for detailed explination of params => https://docs.functionary.run/states
+ *
+ * @param {string} name - __REQUIRED__ the name event.
+ * @param {Object} [properties] - list of properties to add to the object
+ *
+ */
+export interface FunctionaryClientState {
+  name: string
+  properties?: object
 }
 
 /**
  * @interface FunctionaryState - Interface describing the a `event` to be sent in a `event` payload.
- * See for detailed explination of params => https://docs.functionary.run/events
  *
  * @param {string} name - __REQUIRED__ the name event.
  * @param {string} ts - __REQUIRED__ the timestamp of the event.
@@ -51,90 +67,133 @@ export interface FunctionaryState {
 
 /**
  * @interface FunctionaryStatesPayload - Interface describing the payload expected by the `events` endpoint.
- * See for detailed explination of params => https://docs.functionary.run/events
+ * See for detailed explination of params => https://docs.functionary.run/states
  *
  * @param {(string | number)[]} ids - __REQUIRED__ list of ids to identify the model
- * @param {string} [model] - __REQUIRED__ the name of the model type for the object.
+ * @param {FunctionarySupportedModel} [model] - __REQUIRED__ the name of the model type for the object.
  * @param {FunctionaryState[]} [states] - __REQUIRED__ list of states to be sent in the payload
  *
  */
 export interface FunctionaryStatePayload {
   ids: (string | number)[]
-  model: string
+  model: FunctionarySupportedModel
   states: FunctionaryState[]
 }
 
 /**
- * Describes a Functionary object.
- *
- * @interface
+ * @interface Functionary - Describes a Functionary object.
  */
 export interface Functionary {
   /**
    * @function setApiKey - set the API Key for your functionary workspace.
    *
-   * @param {string} apiKey - api key as a string
+   * @param {string} apiKey - __REQUIRED__ api key as a string
    */
   setApiKey: (apiKey: string) => void
   /**
-   * @function identify - calls the identify endpoint of Functionary.
+   * @function identify - calls the identify endpoint of Functionary. NOTE: All API calls are batched in 10 second increments.
    *
-   * @param {FunctionaryIdentify} payload - The payload of the Functionary identify POST request.
-   * See the FunctionaryIdentify interface for typing infor ->
-   * `import { FunctionaryIdentify } from "@funct/core"`.
+   * @param {FunctionaryEntity} entity - __REQUIRED__ The properties, ids, and model of the customer or organization to identify.
+   * See the FunctionaryEntity interface for typing info -> `import { FunctionaryEntity } from "@funct/core"`.
+   *
+   * @param {{ setToContext?: boolean }} opts - options for this function.  If `setToContext = true`,
+   * then the customer or org will be set to the current context, functionary will automatically set fired events
+   * to the customer or org on the context.  Useful if a user is logged in.
+   *
+   * @example ```
+   * // calls the identify endpoint with model and id set. will set customer to context depending on the
+   * // default behavior of the surface. react sets the identified customer by default. Node does not.
+   * identify({ model: "customer", ids: ["some-ids"], properties: {...props} })
+   * // calls the identify endpoit without setting the identified customer
+   * // useful if you are sending an event for a user that is NOT logged in, or you are using on a backend
+   * // where the many users will share the same context
+   * identify({ model: "customer", ids: ["some-ids"], properties: {...props} }, { setToContext: false })
+   * ```
    */
-  identify: (payload: FunctionaryIdentify) => Promise<void>
+  identify: (entity: FunctionaryEntity, opts?: { setToContext?: boolean }) => void
   /**
-   * @function event - calls the identify endpoint of Functionary.
+   * @function event - calls the event endpoint of Functionary. NOTE: All API calls are batched in 10 second increments.
    *
-   * @param {FunctionaryEvent} payload - The payload of the Functionary event POST request. See the
-   * FunctionaryEvent interface for typing infor -> `import { FunctionaryEvent } from "@funct/core"`.
+   * @param {FunctionaryClientState} event - __REQUIRED__ The customer or organization event to be sent to functionary. See the
+   * FunctionaryClientState interface for typing info -> `import { FunctionaryClientState } from "@funct/core"`.
+   *
+   * @param {FunctionarySupportedModel | FunctionaryEntity} opts - allows you to specify the customer or organization
+   * on which an event will be assigned. By default, it uses the customer on the context. See the FunctionarySupportedModel,
+   * FunctionaryEntity interfaces for typing info -> `import { FunctionarySupportedModel, FunctionaryEntity } from "@funct/core"`.
+   *
+   * @example ```
+   * // Uses the customer set on the context.
+   * event({ name: "sign_up" })
+   * // Uses the organization | customer set on the context.
+   * event({ name: "sign_up" }, "organization")
+   * event({ name: "sign_up" }, "customer")
+   * // Uses the customer with the ids in the Arr of the ids
+   * event({ name: "sign_up" }, { model: "customer", ids: ["some-id"] } )
+   * ```
    */
-  event: (payload: FunctionaryState, model: string) => void
+  event: (event: FunctionaryClientState, opts?: FunctionarySupportedModel | FunctionaryEntity) => void
   /**
-   * @function setBaseUrl - Define the base url for sending the identify and event calls.
+   * @function assign - allows developer to assign a customer to an organization.
    *
-   * @param {string} url - url formatted as '(https|http)://{{domain}}.{{TLD}}', for example, http://example.com
+   * @param {Omit<FunctionaryEntity, 'properties'>} child - __REQUIRED__ The entity to become the child.  This should always be a "customer".
+   *
+   * @param {Omit<FunctionaryEntity, 'properties'>} parent - __REQUIRED__ The entity to become the parent.  This should always be a "organization".
+   *
+   * @example ```
+   * // Uses the customer set on the context.
+   * assign({ model: "customer", ids: ["customer-id"] }, { model: "organization", ids: ["organization-id"] })
+   * ```
    */
-  setBaseUrl(url: string): void
+  assign: (child: Omit<FunctionaryEntity, 'properties'>, parent: Omit<FunctionaryEntity, 'properties'>) => void
+  /**
+   * @function resetContext - allows developer to wipe out the context, specifically when a user logs out.
+   *
+   * @param {FunctionarySupportedModel[]} models - sets which models to revoke the context from.
+   * By default, its both `['customer', 'organization']`
+   *
+   * @example ```
+   * // By default, its both `['customer', 'organization']`
+   * resetContext()
+   * // just resets customer
+   * resetContext(['customer'])
+   * // just resets organization
+   * resetContext(['organization'])
+   * ```
+   */
+  resetContext: (models?: FunctionarySupportedModel[]) => void
 }
 
 export abstract class BaseFunctionary implements Functionary {
   private _apikey: string | null = null
-  private _baseURL: string = 'https://functionary.run/api/v1'
+  private baseURL: string
 
   private _debug: boolean
   private _stub: boolean
   private _fireOnNextEvent: boolean
+  private _fireOnNextIdentify: boolean
 
   private surfaceDelegate: ISurfaceDelegate
 
   constructor(
     surfaceDelegate: ISurfaceDelegate,
-    opts?: { stub: boolean; debug: boolean; fireOnInstantiation: boolean },
+    opts?: { stub?: boolean; debug?: boolean; fireOnInstantiation?: boolean; baseURL?: string },
   ) {
-    const { stub = false, debug = false, fireOnInstantiation = true } = opts || {}
+    const {
+      stub = false,
+      debug = false,
+      fireOnInstantiation = true,
+      baseURL = 'https://functionary.run/api/v1',
+    } = opts || {}
 
     this._stub = stub
     this._fireOnNextEvent = fireOnInstantiation
+    this._fireOnNextIdentify = fireOnInstantiation
     this._debug = debug
+    this.baseURL = baseURL
 
     this.surfaceDelegate = surfaceDelegate
 
     this.setupFromEnv()
-  }
-
-  setBaseUrl(url: string): void {
-    this.baseURL = url
-  }
-
-  get baseURL(): string {
-    return this._baseURL
-  }
-
-  set baseURL(url: string) {
-    this._baseURL = url
-    this.surfaceDelegate.set('baseURL', url)
   }
 
   setApiKey(apiKey: string): void {
@@ -165,7 +224,8 @@ export abstract class BaseFunctionary implements Functionary {
 
   private _entityReferenceCache: { [model: string]: string } = {}
 
-  setEntityContext(model: string, ids: (string | number)[]): void {
+  setEntityContext(entity: FunctionaryEntity): void {
+    const { ids, model } = entity
     if (ids.length === 0) {
       this._log('ids length must be greater than 0 when calling setEntityContext', 'error')
     } else {
@@ -175,7 +235,7 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  getEntityContext(model: string): string | null {
+  getEntityContext(model: FunctionarySupportedModel): string | null {
     if (this._entityReferenceCache.hasOwnProperty(model)) {
       return this._entityReferenceCache[model]
     } else {
@@ -189,14 +249,14 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  revokeEntityContext(model: string): void {
+  revokeEntityContext(model: FunctionarySupportedModel): void {
     if (this._entityReferenceCache.hasOwnProperty(model)) {
       delete this._entityReferenceCache[model]
     }
     this.surfaceDelegate.remove(`${model}ReferenceId`)
   }
 
-  restoreEntityContext(model: string): boolean {
+  restoreEntityContext(model: FunctionarySupportedModel): boolean {
     const potentialId = this.surfaceDelegate.get(`${model}ReferenceId`)
     if (potentialId) {
       this._entityReferenceCache[model] = potentialId
@@ -206,26 +266,103 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  identify(payload: Omit<FunctionaryIdentify, 'parentId' | 'childIds'>): Promise<void> {
-    if (payload.model !== 'customer' && payload.model !== 'organization') {
+  resetContext(models: FunctionarySupportedModel[] = ['customer', 'organization']): void {
+    return models.forEach(model => this.revokeEntityContext(model))
+  }
+
+  assign(child: Omit<FunctionaryEntity, 'properties'>, parent: Omit<FunctionaryEntity, 'properties'>): void {
+    if (child.model !== 'customer' || parent.model !== 'organization') {
       const errMess = `functionary can only accept "organization" or "customer" as a model type.`
       this._log(errMess, 'error')
-      return Promise.reject(errMess)
     }
 
-    return this._call({ endpoint: '/identify', payload })
+    this.cacheOrSendIdentify({ ...child, parent: parent })
   }
 
-  eventWithEntity(payload: FunctionaryState, entity: FunctionaryEntity): void {
-    this.cacheOrSendEvent(payload, entity)
+  identify(entity: FunctionaryEntity, opts?: { setToContext?: boolean }): void {
+    if (entity.model !== 'customer' && entity.model !== 'organization') {
+      const errMess = `functionary can only accept "organization" or "customer" as a model type.`
+      this._log(errMess, 'error')
+    }
+
+    if (opts && opts.setToContext) {
+      this.setEntityContext(entity)
+    }
+
+    this.cacheOrSendIdentify(entity)
   }
 
-  event(payload: FunctionaryState, model: string): void {
-    const knownId = this.getEntityContext(model)
-    if (knownId) {
-      this.cacheOrSendEvent(payload, { model, ids: [knownId] })
+  static _identifyCache: FunctionaryIdentify[] = []
+  private throttledSendIdentify: DebouncedFunc<() => Promise<void>> | undefined
+
+  cacheOrSendIdentify(entity: FunctionaryIdentify): void {
+    const targetIdx = BaseFunctionary._indexOfEntityInCache(entity, BaseFunctionary._identifyCache)
+
+    if (targetIdx === -1) {
+      BaseFunctionary._identifyCache.push({ ...entity, ids: entity.ids.map(id => id.toString()) })
     } else {
-      this._log('Unable to load entity id from context correctly', 'error')
+      const existingTargetIds = BaseFunctionary._identifyCache[targetIdx].ids
+      BaseFunctionary._identifyCache[targetIdx].ids = union(
+        existingTargetIds,
+        entity.ids.map(id => id.toString()),
+      )
+      if (entity.parent) {
+        // last write wins
+        BaseFunctionary._identifyCache[targetIdx].parent = entity.parent
+      }
+      // not idompotent
+      // if (entity.children) {
+      //   const existingTargetChildIds = BaseFunctionary._identifyCache[targetIdx].childIds || []
+      //   BaseFunctionary._identifyCache[targetIdx].childIds = union(existingTargetChildIds, entity.childIds)
+      // }
+      if (entity.properties) {
+        const existingTargetProperties = BaseFunctionary._identifyCache[targetIdx].properties || {}
+        // last write wins. Same as API
+        BaseFunctionary._identifyCache[targetIdx].properties = { ...existingTargetProperties, ...entity.properties }
+      }
+    }
+
+    if (!this.throttledSendIdentify) {
+      this.throttledSendIdentify = throttle(this.sendIdentifies, 10000, { leading: false })
+      this.surfaceDelegate.addFlushListeners(this.throttledSendIdentify.flush)
+    }
+
+    this.throttledSendIdentify()
+
+    if (this._fireOnNextIdentify) {
+      this._fireOnNextIdentify = false
+      this.throttledSendIdentify.flush()
+    }
+  }
+
+  async sendIdentifies(): Promise<void> {
+    const payloads = BaseFunctionary._identifyCache
+    BaseFunctionary._identifyCache = []
+    return payloads.forEach(payload => this._call({ endpoint: '/identify', payload }))
+  }
+
+  event(payload: FunctionaryClientState, opts: FunctionarySupportedModel | FunctionaryEntity = 'customer'): void {
+    const ts = new Date().getTime()
+    //check if opts ids exist
+    if (opts.hasOwnProperty('ids')) {
+      // send event with the entity passed in
+      this.cacheOrSendEvent({ ts, ...payload }, opts as FunctionaryEntity)
+    } else {
+      // get ent from current cxt
+      const model = opts as FunctionarySupportedModel
+
+      if (model !== 'customer' && model !== 'organization') {
+        const errMess = `functionary can only accept "organization" or "customer" as a model type.`
+        this._log(errMess, 'error')
+      }
+
+      const knownId = this.getEntityContext(model)
+      if (knownId) {
+        // send event with entity from current context
+        this.cacheOrSendEvent({ ts, ...payload }, { model, ids: [knownId] })
+      } else {
+        this._log('Unable to load entity id from context correctly', 'error')
+      }
     }
   }
 
@@ -243,7 +380,7 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  setupFromSurfaceDelegate(modelsToRestore: string[]) {
+  setupFromSurfaceDelegate(modelsToRestore: FunctionarySupportedModel[] = ['customer', 'organization']) {
     const keyFromSurface = this.surfaceDelegate.get('apiKey')
     if (!!keyFromSurface) {
       this.apikey = keyFromSurface
@@ -260,12 +397,18 @@ export abstract class BaseFunctionary implements Functionary {
   private _log(message: string, type: 'error' | 'warning' | 'normal' = 'normal') {
     if (this._debug) {
       switch (type) {
-        case 'error':
+        case 'error': {
           console.error(`[FUNCTIONARY ERROR] ${message}`)
-        case 'warning':
+          return
+        }
+        case 'warning': {
           console.warn(`[FUNCTIONARY] ${message}`)
-        default:
+          return
+        }
+        default: {
           console.log(`[FUNCTIONARY] ${message}`)
+          return
+        }
       }
     }
   }
@@ -275,56 +418,49 @@ export abstract class BaseFunctionary implements Functionary {
   private throttledSendEvents: DebouncedFunc<() => Promise<void>> | undefined
 
   cacheOrSendEvent(state: FunctionaryState, entity: FunctionaryEntity): void {
-    let eventWasAdded = false
-    for (var entStateInd = 0; entStateInd < BaseFunctionary._stateCache.length; entStateInd++) {
-      const statePayload = BaseFunctionary._stateCache[entStateInd]
-      if (entity.model === statePayload.model) {
-        const statePayloadIds = statePayload.ids
-        for (var entIdInd = 0; entIdInd < statePayloadIds.length; entIdInd++) {
-          const currId = statePayloadIds[entIdInd]
+    const targetIdx = BaseFunctionary._indexOfEntityInCache(entity, BaseFunctionary._stateCache)
 
-          if (entity.ids.includes(currId)) {
-            BaseFunctionary._stateCache[entStateInd].ids = union(statePayloadIds, entity.ids)
-            BaseFunctionary._stateCache[entStateInd].states.push(state)
-            BaseFunctionary._stateCacheCount++
-
-            eventWasAdded = true
-
-            entIdInd = BaseFunctionary._stateCache[entStateInd].ids.length
-            entStateInd = BaseFunctionary._stateCache.length
-          }
-        }
-      }
-    }
-    if (!eventWasAdded) {
+    if (targetIdx === -1) {
       BaseFunctionary._stateCacheCount++
       BaseFunctionary._stateCache.push({
         model: entity.model,
-        ids: entity.ids,
+        ids: entity.ids.map(id => id.toString()),
         states: [state],
       })
+    } else {
+      const targetExistingIds = BaseFunctionary._stateCache[targetIdx].ids
+      BaseFunctionary._stateCache[targetIdx].ids = union(
+        targetExistingIds,
+        entity.ids.map(id => id.toString()),
+      )
+      BaseFunctionary._stateCache[targetIdx].states.push(state)
+      BaseFunctionary._stateCacheCount++
     }
+
     if (!this.throttledSendEvents) {
       this.throttledSendEvents = throttle(this.sendEvents, 10000, { leading: false })
       this.surfaceDelegate.addFlushListeners(this.throttledSendEvents.flush)
-      if (this._fireOnNextEvent || BaseFunctionary._stateCacheCount === 300) {
-        this.throttledSendEvents.flush()
-      }
     }
+
     this.throttledSendEvents()
+
+    if (this._fireOnNextEvent || BaseFunctionary._stateCacheCount === 300) {
+      this._fireOnNextEvent = false
+      this.throttledSendEvents.flush()
+    }
   }
 
   async sendEvents(): Promise<void> {
     const payload = BaseFunctionary._stateCache
     BaseFunctionary._stateCache = []
     BaseFunctionary._stateCacheCount = 0
-    return this._call({ endpoint: '/event', payload })
+    return this._call({ endpoint: '/state', payload })
   }
 
   private _call(
     requestOpts:
       | { endpoint: '/identify'; payload: FunctionaryIdentify }
-      | { endpoint: '/event'; payload: FunctionaryStatePayload[] },
+      | { endpoint: '/state'; payload: FunctionaryStatePayload[] },
   ): Promise<void> {
     if (this.apikeyExists()) {
       return this._http(requestOpts)
@@ -346,13 +482,13 @@ export abstract class BaseFunctionary implements Functionary {
   private _http(
     requestOpts:
       | { endpoint: '/identify'; payload: FunctionaryIdentify }
-      | { endpoint: '/event'; payload: FunctionaryStatePayload[] },
+      | { endpoint: '/state'; payload: FunctionaryStatePayload[] },
   ): Promise<AxiosResponse<any>> {
     const { endpoint, payload } = requestOpts
     if (this._stub) {
       return Promise.resolve({
-        data: {},
-        status: 200,
+        data: { ok: true },
+        status: endpoint === '/identify' ? 200 : 202,
         statusText: '',
         headers: {},
         config: {
@@ -361,6 +497,8 @@ export abstract class BaseFunctionary implements Functionary {
           headers: {
             Authorization: `Bearer ${this.apikey}`,
             'Content-Type': 'application/json',
+            'X-Timezone-Offset': new Date().getTimezoneOffset() * 60 * 1000,
+            'X-Source': 'client-js',
           },
         },
       })
@@ -376,5 +514,26 @@ export abstract class BaseFunctionary implements Functionary {
         },
       })
     }
+  }
+
+  private static _indexOfEntityInCache(
+    entity: FunctionaryEntity,
+    cache: ({ model: FunctionarySupportedModel; ids: (string | number)[] } & any)[],
+  ): number {
+    const { ids: rawTargetIds, model: targetModel } = entity
+    const targetIds = rawTargetIds.map(id => id.toString())
+    for (var entInd = 0; entInd < cache.length; entInd++) {
+      const { ids: searchIds, model: searchModel } = cache[entInd]
+      if (targetModel === searchModel) {
+        for (var searchIdInd = 0; searchIdInd < searchIds.length; searchIdInd++) {
+          const currId = searchIds[searchIdInd]
+
+          if (targetIds.includes(currId)) {
+            return entInd
+          }
+        }
+      }
+    }
+    return -1
   }
 }

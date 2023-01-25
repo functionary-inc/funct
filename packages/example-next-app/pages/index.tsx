@@ -10,8 +10,11 @@ import Link from 'next/link'
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
-  const { setApiKey } = useFunctionary()
-  // setApiKey('I AM A FAKE')
+  const functionary = useFunctionary({
+    debug: true,
+    baseURL: 'https://dev-slack-crm.localsymphony.io/api/v1',
+  })
+  functionary.setApiKey('fcrm_f39d9854b6de3fe0eb86e1b09ffae91e5a649f22a2ca17e6')
 
   return (
     <>
@@ -27,13 +30,14 @@ export default function Home() {
             <button>Go To NEW PAGE</button>
           </Link>
           <button
-            onClick={
-              () => undefined
-              // addEvent({ name: 'test_test', ts: new Date().getTime() }, { ids: ['new-id-hell'], model: 'customer' })
+            onClick={() =>
+              functionary.identify({ model: 'customer', ids: ['some-new-id'], properties: { test: 'aProp' } })
             }
           >
-            TEST SOMETHING
+            TEST Identify
           </button>
+
+          <button onClick={() => functionary.event({ name: 'button_pressed' })}>TEST event</button>
           <p>
             Get started by editing&nbsp;
             <code className={styles.code}>pages/index.tsx</code>

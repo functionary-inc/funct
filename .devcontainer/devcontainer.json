@@ -31,7 +31,7 @@
   ],
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [3002, 3000],
+  "forwardPorts": [3002, 3003],
 
   // Use 'postCreateCommand' to run commands after the container is created.
   "postCreateCommand": "yarn setup:dev:create",
@@ -48,7 +48,7 @@
     "3002": {
       "label": "example-express"
     },
-    "3000": {
+    "3003": {
       "label": "example-next"
     }
   },

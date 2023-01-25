@@ -27,7 +27,7 @@ export class Functionary extends BaseFunctionary implements IFunctionary {
 
     const { on = true, debug = false, apikey } = opts || {}
 
-    super(storageDelegate, { stub: on, debug })
+    super(storageDelegate, { stub: on, debug, fireOnInstantiation: true })
 
     this.setupFromSurfaceDelegate()
 

@@ -8,6 +8,7 @@
     "setup:dev:create": "scripts/postCreate",
     "build": "lerna run build --include-dependencies --stream  --",
     "build:watch": "lerna run --parallel build:watch --",
+    "dev": "lerna run dev",
     "lerna:publish": "lerna run --parallel build && lerna publish --",
     "test": "lerna run test --",
     "prepare": "husky install"
