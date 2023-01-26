@@ -280,6 +280,13 @@ export abstract class BaseFunctionary implements Functionary {
   }
 
   identify(entity: FunctionaryEntity, opts?: { setToContext?: boolean }): void {
+    if (!this.apikeyExists()) {
+      const errMess =
+        'Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY or NEXT_PUBLIC_FUNCTIONARY_API_KEY'
+      this._log(errMess, 'error')
+      return
+    }
+
     if (entity.model !== 'customer' && entity.model !== 'organization') {
       const errMess = `functionary can only accept "organization" or "customer" as a model type.`
       this._log(errMess, 'error')
@@ -342,6 +349,13 @@ export abstract class BaseFunctionary implements Functionary {
   }
 
   event(payload: FunctionaryClientState, opts: FunctionarySupportedModel | FunctionaryEntity = 'customer'): void {
+    if (!this.apikeyExists()) {
+      const errMess =
+        'Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY or NEXT_PUBLIC_FUNCTIONARY_API_KEY'
+      this._log(errMess, 'error')
+      return
+    }
+
     const ts = new Date().getTime()
     // check if opts ids exist
     if (opts.hasOwnProperty('ids')) {
@@ -387,11 +401,6 @@ export abstract class BaseFunctionary implements Functionary {
     }
 
     modelsToRestore.forEach(model => this.restoreEntityContext(model))
-
-    const baseURLFromSurface = this.surfaceDelegate.get('baseURL')
-    if (!!baseURLFromSurface) {
-      this.baseURL = baseURLFromSurface
-    }
   }
 
   private _log(message: string, type: 'error' | 'warning' | 'normal' = 'normal') {
@@ -473,7 +482,7 @@ export abstract class BaseFunctionary implements Functionary {
         })
     } else {
       const errMess =
-        'Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY'
+        'Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY or NEXT_PUBLIC_FUNCTIONARY_API_KEY'
       this._log(errMess, 'error')
       return Promise.reject(errMess)
     }

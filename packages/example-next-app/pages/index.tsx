@@ -14,7 +14,8 @@ export default function Home() {
     debug: true,
     baseURL: 'https://dev-slack-crm.localsymphony.io/api/v1',
   })
-  functionary.setApiKey('fcrm_f39d9854b6de3fe0eb86e1b09ffae91e5a649f22a2ca17e6')
+
+  // functionary.setApiKey('fcrm_f39d9854b6de3fe0eb86e1b09ffae91e5a649f22a2ca17e6')
 
   return (
     <>
@@ -34,10 +35,35 @@ export default function Home() {
               functionary.identify({ model: 'customer', ids: ['some-new-id'], properties: { test: 'aProp' } })
             }
           >
-            TEST Identify
+            TEST Identify For customer
           </button>
 
-          <button onClick={() => functionary.event({ name: 'button_pressed' })}>TEST event</button>
+          <button
+            onClick={() =>
+              functionary.identify({ model: 'organization', ids: ['some-new-id'], properties: { test: 'aOrgProp' } })
+            }
+          >
+            TEST Identify For Organization
+          </button>
+
+          <button
+            onClick={() =>
+              functionary.assign(
+                { model: 'customer', ids: ['some-new-id'] },
+                { model: 'organization', ids: ['some-new-id'] },
+              )
+            }
+          >
+            Assign customer to Organization
+          </button>
+
+          <button onClick={() => functionary.resetContext()}>reset ctx</button>
+
+          <button onClick={() => functionary.event({ name: 'button_pressed' })}>TEST event for customer</button>
+
+          <button onClick={() => functionary.event({ name: 'org_button_pressed' }, 'organization')}>
+            TEST event for organization
+          </button>
           <p>
             Get started by editing&nbsp;
             <code className={styles.code}>pages/index.tsx</code>
