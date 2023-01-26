@@ -5,13 +5,16 @@ export { FunctionaryIdentify, FunctionaryState } from '@funct/core'
  * Describes a Functionary object.
  *
  * @constructor
- * @param opts \{
-    apikey?: string
-    on?: boolean
-    debug?: boolean
-    fireOnInstantiation?: boolean
-    baseURL?: string
-  } - __OPTIONAL__ Options to instantiate a Functionary object
+ * @param opts- __OPTIONAL__ Options to instantiate a Functionary object
+ * ```
+ * {
+ *   apikey?: string
+ *   on?: boolean
+ *   debug?: boolean
+ *   fireOnInstantiation?: boolean
+ *   baseURL?: string
+ * }
+ * ```
  *
  * @example ```
  * // apikey pulls from process.env.FUNCTIONARY_API_KEY
