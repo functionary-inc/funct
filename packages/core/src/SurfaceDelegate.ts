@@ -46,18 +46,18 @@ export class NodeSurfaceDelegate implements ISurfaceDelegate {
   private static _memory: { [key: string]: string } = {}
 
   addFlushListeners(flush: () => Promise<void> | undefined) {
-    //https://stackoverflow.com/questions/14031763/doing-a-cleanup-action-just-before-node-js-exits
-    //do something when app is closing
+    // https://stackoverflow.com/questions/14031763/doing-a-cleanup-action-just-before-node-js-exits
+    // do something when app is closing
     process.on('exit', flush)
 
-    //catches ctrl+c event
+    // catches ctrl+c event
     process.on('SIGINT', flush)
 
     // catches "kill pid" (for example: nodemon restart)
     process.on('SIGUSR1', flush)
     process.on('SIGUSR2', flush)
 
-    //catches uncaught exceptions
+    // catches uncaught exceptions
     process.on('uncaughtException', flush)
   }
 

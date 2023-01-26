@@ -38,14 +38,14 @@ class ReactFunctionary extends BaseFunctionary {
  * @function setApiKey - set the API Key for your functionary workspace.
  *
  */
-export const useFunctionary = (opts?: {
+export const useFunctionary = (options?: {
   on?: boolean
   debug?: boolean
   fireOnInstantiation?: boolean
   baseURL?: string
 }): Functionary => {
   const functionary = useMemo<ReactFunctionary>(() => {
-    const { on = true, debug = false, fireOnInstantiation = true, baseURL } = opts || {}
+    const { on = true, debug = false, fireOnInstantiation = true, baseURL } = options || {}
     return new ReactFunctionary({ stub: !on, debug, fireOnInstantiation, baseURL })
   }, [])
 

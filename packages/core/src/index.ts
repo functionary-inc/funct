@@ -276,7 +276,7 @@ export abstract class BaseFunctionary implements Functionary {
       this._log(errMess, 'error')
     }
 
-    this.cacheOrSendIdentify({ ...child, parent: parent })
+    this.cacheOrSendIdentify({ ...child, parent })
   }
 
   identify(entity: FunctionaryEntity, opts?: { setToContext?: boolean }): void {
@@ -343,7 +343,7 @@ export abstract class BaseFunctionary implements Functionary {
 
   event(payload: FunctionaryClientState, opts: FunctionarySupportedModel | FunctionaryEntity = 'customer'): void {
     const ts = new Date().getTime()
-    //check if opts ids exist
+    // check if opts ids exist
     if (opts.hasOwnProperty('ids')) {
       // send event with the entity passed in
       this.cacheOrSendEvent({ ts, ...payload }, opts as FunctionaryEntity)
@@ -522,13 +522,11 @@ export abstract class BaseFunctionary implements Functionary {
   ): number {
     const { ids: rawTargetIds, model: targetModel } = entity
     const targetIds = rawTargetIds.map(id => id.toString())
-    for (var entInd = 0; entInd < cache.length; entInd++) {
+    for (let entInd = 0; entInd < cache.length; entInd++) {
       const { ids: searchIds, model: searchModel } = cache[entInd]
       if (targetModel === searchModel) {
-        for (var searchIdInd = 0; searchIdInd < searchIds.length; searchIdInd++) {
-          const currId = searchIds[searchIdInd]
-
-          if (targetIds.includes(currId)) {
+        for (const searchId of searchIds) {
+          if (targetIds.includes(searchId)) {
             return entInd
           }
         }
