@@ -119,8 +119,8 @@ export class BrowserSurfaceDelegate implements ISurfaceDelegate {
     if (typeof document === 'undefined') {
       return null
     } else {
-      document.cookie.split(';').forEach(function (cookie) {
-        var cookieName = cookie.trim().split('=')[0]
+      document.cookie.split(';').forEach(cookie => {
+        const cookieName = cookie.trim().split('=')[0]
         if (cookieName.startsWith(prefix)) {
           document.cookie = cookieName + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT'
         }
