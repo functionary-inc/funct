@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev:start": "ts-node server.ts",
+    "dev:start": "kill-port 3002 && ts-node server.ts",
     "dev": "nodemon --exec \"yarn dev:start\" --watch server.ts",
     "lint": "tslint -p tsconfig.json"
   },

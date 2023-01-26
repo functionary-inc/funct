@@ -11,6 +11,7 @@ export {
   FunctionaryEntity,
   FunctionaryClientState,
   FunctionaryState,
+  FunctionaryStatePayload,
   Functionary,
   FunctionarySupportedModel,
 } from '@funct/core'
@@ -73,7 +74,8 @@ export const useFunctionary = (options?: {
   )
 
   const addProperties = useCallback(
-    (model: FunctionarySupportedModel, properties: object) => functionary.addProperties(model, properties),
+    (properties: object, opts?: FunctionarySupportedModel | FunctionaryEntity) =>
+      functionary.addProperties(properties, opts),
     [functionary],
   )
 

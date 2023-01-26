@@ -514,14 +514,32 @@ export abstract class BaseFunctionary implements Functionary {
       | { endpoint: '/state'; payload: FunctionaryStatePayload[] },
   ): Promise<void> {
     if (this.apikeyExists()) {
-      this._log(JSON.stringify(requestOpts.payload), 'normal')
-      return this._http(requestOpts)
+      const requestId = randomUUID()
+      this._log(`${requestOpts.endpoint} request ${requestId} : ${JSON.stringify(requestOpts.payload)}`)
+      return this._http({ ...requestOpts, requestId })
         .then(resp => {
-          this._log(`${requestOpts.endpoint} response: ${resp.status} ${JSON.stringify(resp.data)}`)
+          this._log(
+            `${requestOpts.endpoint} response ${resp.headers['x-request-id'] || 'No ID'}: ${
+              resp.status
+            } ${JSON.stringify(resp.data)}`,
+          )
         })
         .catch(err => {
-          const mess = (err as Error).message || 'There was an error'
-          this._log(`${requestOpts.endpoint} response: ${mess}`, 'error')
+          try {
+            let mess
+            if (err.response.status < 500) {
+              mess = `${requestOpts.endpoint} response ${err.response.headers['x-request-id']} : ${
+                (err as Error).message || 'There was an error'
+              } \n data: ${JSON.stringify(err.response.data, null, 2)}`
+            } else {
+              mess = `${requestOpts.endpoint} response ${err.response.status} : ${
+                (err as Error).message || 'There was an error'
+              } \n - ${err.response.statusText}`
+            }
+            this._log(mess, 'error')
+          } catch (e) {
+            console.log(e)
+          }
         })
     } else {
       const errMess =
@@ -533,10 +551,10 @@ export abstract class BaseFunctionary implements Functionary {
 
   private _http(
     requestOpts:
-      | { endpoint: '/identify'; payload: FunctionaryIdentify }
-      | { endpoint: '/state'; payload: FunctionaryStatePayload[] },
+      | { endpoint: '/identify'; payload: FunctionaryIdentify; requestId: string }
+      | { endpoint: '/state'; payload: FunctionaryStatePayload[]; requestId: string },
   ): Promise<AxiosResponse<any>> {
-    const { endpoint, payload } = requestOpts
+    const { endpoint, payload, requestId } = requestOpts
     if (this._stub) {
       return Promise.resolve({
         data: { ok: true },
@@ -549,7 +567,7 @@ export abstract class BaseFunctionary implements Functionary {
           headers: {
             Authorization: `Bearer ${this.apikey}`,
             'Content-Type': 'application/json',
-            'X-Request-Id': randomUUID(),
+            'X-Request-Id': requestId,
             'X-Timezone-Offset': new Date().getTimezoneOffset() * 60 * 1000,
             'X-Source': 'client-js',
           },
@@ -559,10 +577,11 @@ export abstract class BaseFunctionary implements Functionary {
       return axios.post(`${endpoint}`, payload, {
         method: 'POST',
         baseURL: this.baseURL,
+        timeout: 9000,
         headers: {
           Authorization: `Bearer ${this.apikey}`,
           'Content-Type': 'application/json',
-          'X-Request-Id': randomUUID(),
+          'X-Request-Id': requestId,
           'X-Timezone-Offset': new Date().getTimezoneOffset() * 60 * 1000,
           'X-Source': 'client-js',
         },

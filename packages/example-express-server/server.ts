@@ -11,17 +11,34 @@ app.use(cors())
 
 const funct = new Functionary({ debug: true, baseURL: 'https://dev-slack-crm.localsymphony.io/api/v1' })
 
-funct.setApiKey('SOME_API_KEY')
+funct.setApiKey('func_7eb13d72d0b63403cbbc595b8287e0dee5cd5c4ee5ccdead')
 let test = 0
 
-app.get('/', (req: any, res: any) => {
+app.get('/identify', (req: any, res: any) => {
   funct.identify(
-    { model: 'customer', ids: [2234343, 'new-ids', test], properties: { counter: test } },
+    { model: 'customer', ids: [2234343, 'new-ids'], properties: { counter: test } },
     { setToContext: false },
   )
   test++
 
-  console.log(test)
+  res.send('Hello World!')
+})
+
+app.get('/assign', (req: any, res: any) => {
+  funct.identify(
+    { model: 'organization', ids: [2234343, 'new-ids'], properties: { counter: test } },
+    { setToContext: false },
+  )
+
+  funct.assign({ model: 'customer', ids: [2234343, 'new-ids'] }, { model: 'organization', ids: [2234343, 'new-ids'] })
+  test++
+
+  res.send('Hello World!')
+})
+
+app.get('/event', (req: any, res: any) => {
+  funct.event({ name: 'test_event' }, { model: 'customer', ids: [2234343, 'new-ids'] })
+
   res.send('Hello World!')
 })
 

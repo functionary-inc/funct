@@ -1,1 +1,9 @@
-GET http://127.0.0.1:3002/
+GET http://127.0.0.1:3002/identify
+
+###
+
+GET http://127.0.0.1:3002/assign
+
+###
+
+GET http://127.0.0.1:3002/event

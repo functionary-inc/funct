@@ -1,5 +1,13 @@
 import { BaseFunctionary, Functionary as IFunctionary, NodeSurfaceDelegate } from '@funct/core'
-export { FunctionaryIdentify, FunctionaryState } from '@funct/core'
+export {
+  FunctionaryIdentify,
+  FunctionaryEntity,
+  FunctionaryClientState,
+  FunctionaryState,
+  FunctionaryStatePayload,
+  Functionary as IFunctionary,
+  FunctionarySupportedModel,
+} from '@funct/core'
 
 /**
  * Describes a Functionary object.
