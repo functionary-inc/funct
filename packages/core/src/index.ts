@@ -3,6 +3,7 @@ import { ISurfaceDelegate } from './SurfaceDelegate'
 export { BrowserSurfaceDelegate, NodeSurfaceDelegate } from './SurfaceDelegate'
 import throttle from 'lodash.throttle'
 import union from 'lodash.union'
+import { randomUUID } from 'crypto'
 import { DebouncedFunc } from 'lodash'
 
 export type FunctionarySupportedModel = 'customer' | 'organization'
@@ -146,6 +147,27 @@ export interface Functionary {
    */
   assign: (child: Omit<FunctionaryEntity, 'properties'>, parent: Omit<FunctionaryEntity, 'properties'>) => void
   /**
+   * @function addProperties - allows developer to add a property to the customer or organization on the context.  Only
+   * works with the customer set on the context.
+   *
+   * @param {object} properties - __REQUIRED__ The dictionary of products to add to the customer or organization
+   *
+   * @param {FunctionarySupportedModel | Omit<FunctionaryEntity, 'properties'>} opts - allows you to specify the customer or organization
+   * on which an property will be assigned. By default, it uses the customer on the context. See the FunctionarySupportedModel,
+   * FunctionaryEntity interfaces for typing info -> `import { FunctionarySupportedModel, FunctionaryEntity } from "@funct/core"`.
+   *
+   * @example ```
+   * // Uses the customer set on the context.
+   * addProperties({ aprop: "theValue" })
+   * // Uses the organization | customer set on the context.
+   * addProperties({ aprop: "theValue" }, "organization")
+   * addProperties({ aprop: "theValue" }, "customer")
+   * // Uses the customer with the ids in the Arr of the ids
+   * addProperties({ aprop: "theValue" }, { model: "customer", ids: ["some-id"] } )
+   * ```
+   */
+  addProperties: (properties: object, opts?: FunctionarySupportedModel | FunctionaryEntity) => void
+  /**
    * @function resetContext - allows developer to wipe out the context, specifically when a user logs out.
    *
    * @param {FunctionarySupportedModel[]} models - sets which models to revoke the context from.
@@ -235,6 +257,26 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
+  addProperties(
+    properties: object,
+    opts: FunctionarySupportedModel | Omit<FunctionaryEntity, 'properties'> = 'customer',
+  ) {
+    if (opts.hasOwnProperty('ids')) {
+      // send event with the entity passed in
+      this.cacheOrSendIdentify({ ...(opts as Omit<FunctionaryEntity, 'properties'>), properties })
+    } else {
+      const model = opts as FunctionarySupportedModel
+
+      const knownId = this.getEntityContext(model)
+      if (knownId) {
+        // send event with entity from current context
+        this.cacheOrSendIdentify({ ids: [knownId], model, properties })
+      } else {
+        this._log(`Unable to load ${model} id from context correctly`, 'error')
+      }
+    }
+  }
+
   getEntityContext(model: FunctionarySupportedModel): string | null {
     if (this._entityReferenceCache.hasOwnProperty(model)) {
       return this._entityReferenceCache[model]
@@ -299,10 +341,10 @@ export abstract class BaseFunctionary implements Functionary {
     this.cacheOrSendIdentify(entity)
   }
 
-  static _identifyCache: FunctionaryIdentify[] = []
+  private static _identifyCache: FunctionaryIdentify[] = []
   private throttledSendIdentify: DebouncedFunc<() => Promise<void>> | undefined
 
-  cacheOrSendIdentify(entity: FunctionaryIdentify): void {
+  private cacheOrSendIdentify(entity: FunctionaryIdentify): void {
     const targetIdx = BaseFunctionary._indexOfEntityInCache(entity, BaseFunctionary._identifyCache)
 
     if (targetIdx === -1) {
@@ -342,7 +384,7 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  async sendIdentifies(): Promise<void> {
+  private async sendIdentifies(): Promise<void> {
     const payloads = BaseFunctionary._identifyCache
     BaseFunctionary._identifyCache = []
     return payloads.forEach(payload => this._call({ endpoint: '/identify', payload }))
@@ -375,7 +417,7 @@ export abstract class BaseFunctionary implements Functionary {
         // send event with entity from current context
         this.cacheOrSendEvent({ ts, ...payload }, { model, ids: [knownId] })
       } else {
-        this._log('Unable to load entity id from context correctly', 'error')
+        this._log(`Unable to load ${model} id from context correctly`, 'error')
       }
     }
   }
@@ -422,11 +464,11 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  static _stateCache: FunctionaryStatePayload[] = []
-  static _stateCacheCount: number = 0
+  private static _stateCache: FunctionaryStatePayload[] = []
+  private static _stateCacheCount: number = 0
   private throttledSendEvents: DebouncedFunc<() => Promise<void>> | undefined
 
-  cacheOrSendEvent(state: FunctionaryState, entity: FunctionaryEntity): void {
+  private cacheOrSendEvent(state: FunctionaryState, entity: FunctionaryEntity): void {
     const targetIdx = BaseFunctionary._indexOfEntityInCache(entity, BaseFunctionary._stateCache)
 
     if (targetIdx === -1) {
@@ -459,7 +501,7 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  async sendEvents(): Promise<void> {
+  private async sendEvents(): Promise<void> {
     const payload = BaseFunctionary._stateCache
     BaseFunctionary._stateCache = []
     BaseFunctionary._stateCacheCount = 0
@@ -472,6 +514,7 @@ export abstract class BaseFunctionary implements Functionary {
       | { endpoint: '/state'; payload: FunctionaryStatePayload[] },
   ): Promise<void> {
     if (this.apikeyExists()) {
+      this._log(JSON.stringify(requestOpts.payload), 'normal')
       return this._http(requestOpts)
         .then(resp => {
           this._log(`${requestOpts.endpoint} response: ${resp.status} ${JSON.stringify(resp.data)}`)
@@ -506,6 +549,7 @@ export abstract class BaseFunctionary implements Functionary {
           headers: {
             Authorization: `Bearer ${this.apikey}`,
             'Content-Type': 'application/json',
+            'X-Request-Id': randomUUID(),
             'X-Timezone-Offset': new Date().getTimezoneOffset() * 60 * 1000,
             'X-Source': 'client-js',
           },
@@ -518,6 +562,7 @@ export abstract class BaseFunctionary implements Functionary {
         headers: {
           Authorization: `Bearer ${this.apikey}`,
           'Content-Type': 'application/json',
+          'X-Request-Id': randomUUID(),
           'X-Timezone-Offset': new Date().getTimezoneOffset() * 60 * 1000,
           'X-Source': 'client-js',
         },

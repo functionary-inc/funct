@@ -5,29 +5,43 @@ export { FunctionaryIdentify, FunctionaryState } from '@funct/core'
  * Describes a Functionary object.
  *
  * @constructor
- * @param opts \{ apikey?: string; on?: boolean } - __OPTIONAL__ Options to instantiate a Functionary object
+ * @param opts \{
+    apikey?: string
+    on?: boolean
+    debug?: boolean
+    fireOnInstantiation?: boolean
+    baseURL?: string
+  } - __OPTIONAL__ Options to instantiate a Functionary object
  *
  * @example ```
  * // apikey pulls from process.env.FUNCTIONARY_API_KEY
  * // or process.env.NEXT_PUBLIC_FUNCTIONARY_API_KEY
- * // on defaults true
  * const funct = new Functionary()
  * ```
  *
  * @example ```
  * const funct = new Functionary({
  *   on: process.env.NODE_ENV === 'production',
+ *   debug: true,
+ *   fireOnInstantiation: true,
+ *   baseURL: 'https://functionary.run/api/v1',
  *   apikey: 'YOUR_API_KEY'
  * })
  * ```
  */
 export class Functionary extends BaseFunctionary implements IFunctionary {
-  constructor(opts?: { apikey?: string; on?: boolean; debug?: boolean }) {
+  constructor(opts?: {
+    apikey?: string
+    on?: boolean
+    debug?: boolean
+    fireOnInstantiation?: boolean
+    baseURL?: string
+  }) {
     const storageDelegate = new NodeSurfaceDelegate()
 
-    const { on = true, debug = false, apikey } = opts || {}
+    const { on = true, debug = false, fireOnInstantiation = true, baseURL, apikey } = opts || {}
 
-    super(storageDelegate, { stub: on, debug, fireOnInstantiation: true })
+    super(storageDelegate, { stub: !on, debug, fireOnInstantiation, baseURL })
 
     this.setupFromSurfaceDelegate()
 
@@ -40,4 +54,4 @@ export class Functionary extends BaseFunctionary implements IFunctionary {
 /**
  * a prebuilt instance of the Functionary for convenience
  */
-export const funct = new Functionary() as IFunctionary
+export const functionary = new Functionary() as IFunctionary

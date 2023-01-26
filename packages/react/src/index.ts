@@ -10,14 +10,18 @@ export {
   FunctionaryIdentify,
   FunctionaryEntity,
   FunctionaryClientState,
+  FunctionaryState,
   Functionary,
   FunctionarySupportedModel,
 } from '@funct/core'
 import { useCallback, useEffect, useMemo } from 'react'
 
 class ReactFunctionary extends BaseFunctionary {
-  constructor(opts: { stub: boolean; debug: boolean; fireOnInstantiation: boolean; baseURL?: string }) {
-    const surfaceDelegate = new BrowserSurfaceDelegate()
+  constructor(
+    persistentType: 'both' | 'cookie' | 'localStorage',
+    opts: { stub: boolean; debug: boolean; fireOnInstantiation: boolean; baseURL?: string },
+  ) {
+    const surfaceDelegate = new BrowserSurfaceDelegate(persistentType)
     super(surfaceDelegate, opts)
   }
 }
@@ -42,11 +46,12 @@ export const useFunctionary = (options?: {
   on?: boolean
   debug?: boolean
   fireOnInstantiation?: boolean
+  persistentType?: 'both' | 'cookie' | 'localStorage'
   baseURL?: string
 }): Functionary => {
   const functionary = useMemo<ReactFunctionary>(() => {
-    const { on = true, debug = false, fireOnInstantiation = true, baseURL } = options || {}
-    return new ReactFunctionary({ stub: !on, debug, fireOnInstantiation, baseURL })
+    const { on = true, debug = false, fireOnInstantiation = true, baseURL, persistentType = 'both' } = options || {}
+    return new ReactFunctionary(persistentType, { stub: !on, debug, fireOnInstantiation, baseURL })
   }, [])
 
   useEffect(() => functionary.setupFromSurfaceDelegate(), [functionary])
@@ -67,6 +72,11 @@ export const useFunctionary = (options?: {
     [functionary],
   )
 
+  const addProperties = useCallback(
+    (model: FunctionarySupportedModel, properties: object) => functionary.addProperties(model, properties),
+    [functionary],
+  )
+
   const event = useCallback(
     (payload: FunctionaryClientState, opts: FunctionaryEntity | FunctionarySupportedModel = 'customer') =>
       functionary.event(payload, opts),
@@ -78,6 +88,7 @@ export const useFunctionary = (options?: {
   return {
     event,
     identify,
+    addProperties,
     resetContext,
     assign,
     setApiKey,
