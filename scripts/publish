@@ -2,6 +2,7 @@
 npm login
 npm config set scope funct --global
 npm config set access public
+yarn build
 npm publish --workspace @funct/core
 npm publish --workspace @funct/react
 npm publish --workspace @funct/node

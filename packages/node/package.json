@@ -1,6 +1,6 @@
 {
   "private": false,
-  "version": "4.0.5",
+  "version": "4.0.7",
   "name": "@funct/node",
   "description": "A node library for calling the functionary API.",
   "scripts": {
@@ -27,7 +27,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@funct/core": "^4.0.5"
+    "@funct/core": "^4.0.7"
   },
   "devDependencies": {}
 }
