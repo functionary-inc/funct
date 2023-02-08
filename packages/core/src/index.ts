@@ -524,7 +524,6 @@ export abstract class BaseFunctionary implements Functionary {
     const payload = BaseFunctionary._stateCache
     BaseFunctionary._stateCache = []
     BaseFunctionary._stateCacheCount = 0
-    debugger
     return this._call({ endpoint: '/state', payload })
   }
 
