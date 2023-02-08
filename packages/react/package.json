@@ -1,6 +1,6 @@
 {
   "private": false,
-  "version": "4.0.7",
+  "version": "4.0.8",
   "name": "@funct/react",
   "description": "A client library for calling the functionary API.",
   "scripts": {
@@ -28,6 +28,6 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@funct/core": "^4.0.7"
+    "@funct/core": "^4.0.8"
   }
 }

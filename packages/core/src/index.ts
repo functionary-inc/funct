@@ -1,12 +1,13 @@
 import axios, { AxiosResponse } from 'axios'
 import { ISurfaceDelegate } from './SurfaceDelegate'
 export { BrowserSurfaceDelegate, NodeSurfaceDelegate } from './SurfaceDelegate'
+export { Person, Group } from './Decorators'
 import throttle from 'lodash.throttle'
 import union from 'lodash.union'
-import { randomUUID } from 'crypto'
 import { DebouncedFunc } from 'lodash'
+import { v4 as uuidv4 } from 'uuid'
 
-export type FunctionarySupportedModel = 'customer' | 'organization'
+export type FunctionarySupportedModel = 'person' | 'group'
 
 /**
  * @interface FunctionaryEntity describing the minimal properties to identify an entity.
@@ -94,76 +95,77 @@ export interface Functionary {
   /**
    * @function identify - calls the identify endpoint of Functionary. NOTE: All API calls are batched in 10 second increments.
    *
-   * @param {FunctionaryEntity} entity - __REQUIRED__ The properties, ids, and model of the customer or organization to identify.
+   * @param {FunctionaryEntity} entity - __REQUIRED__ The properties, ids, and model of the person or group to identify.
    * See the FunctionaryEntity interface for typing info -> `import { FunctionaryEntity } from "@funct/core"`.
    *
-   * @param {{ setToContext?: boolean }} opts - options for this function.  If `setToContext = true`,
-   * then the customer or org will be set to the current context, functionary will automatically set fired events
-   * to the customer or org on the context.  Useful if a user is logged in.
+   * @param {{ setToCache?: boolean }} opts - options for this function.  If `setToCache = true`,
+   * then the person or org will be set to the current context, functionary will automatically set fired events
+   * to the person or org on the context.  Useful if a user is logged in.
    *
    * @example ```
-   * // calls the identify endpoint with model and id set. will set customer to context depending on the
-   * // default behavior of the surface. react sets the identified customer by default. Node does not.
-   * identify({ model: "customer", ids: ["some-ids"], properties: {...props} })
-   * // calls the identify endpoit without setting the identified customer
+   * // calls the identify endpoint with model and id set. will set person to cache depending on the
+   * // default behavior of the surface. react sets the identified person by default. Node does not.
+   * identify({ model: "person", ids: ["some-ids"], properties: {...props} })
+   * // calls the identify endpoit without setting the identified person
    * // useful if you are sending an event for a user that is NOT logged in, or you are using on a backend
-   * // where the many users will share the same context
-   * identify({ model: "customer", ids: ["some-ids"], properties: {...props} }, { setToContext: false })
+   * // where the many users will share the same cache
+   * identify({ model: "person", ids: ["some-ids"], properties: {...props} }, { setToCache: false })
    * ```
    */
-  identify: (entity: FunctionaryEntity, opts?: { setToContext?: boolean }) => void
+  identify: (entity: FunctionaryEntity, opts?: { setToCache?: boolean }) => void
   /**
    * @function event - calls the event endpoint of Functionary. NOTE: All API calls are batched in 10 second increments.
    *
-   * @param {FunctionaryClientState} event - __REQUIRED__ The customer or organization event to be sent to functionary. See the
+   * @param {FunctionaryClientState} event - __REQUIRED__ The person or group event to be sent to functionary. See the
    * FunctionaryClientState interface for typing info -> `import { FunctionaryClientState } from "@funct/core"`.
    *
-   * @param {FunctionarySupportedModel | FunctionaryEntity} opts - allows you to specify the customer or organization
-   * on which an event will be assigned. By default, it uses the customer on the context. See the FunctionarySupportedModel,
+   * @param {FunctionarySupportedModel | FunctionaryEntity} opts - allows you to specify the person or group
+   * on which an event will be assigned. By default, it uses the person on the context. See the FunctionarySupportedModel,
    * FunctionaryEntity interfaces for typing info -> `import { FunctionarySupportedModel, FunctionaryEntity } from "@funct/core"`.
    *
    * @example ```
-   * // Uses the customer set on the context.
+   * // Uses the person set on the context.
    * event({ name: "sign_up" })
-   * // Uses the organization | customer set on the context.
-   * event({ name: "sign_up" }, "organization")
-   * event({ name: "sign_up" }, "customer")
-   * // Uses the customer with the ids in the Arr of the ids
-   * event({ name: "sign_up" }, { model: "customer", ids: ["some-id"] } )
+   * // Uses the group | person set on the context.
+   * event({ name: "sign_up" }, "group")
+   * event({ name: "sign_up" }, "person")
+   * // Uses the person with the ids in the Arr of the ids
+   * event({ name: "sign_up" }, { model: "person", ids: ["some-id"] } )
    * ```
    */
   event: (event: FunctionaryClientState, opts?: FunctionarySupportedModel | FunctionaryEntity) => void
   /**
-   * @function assign - allows developer to assign a customer to an organization.
+   * @function assign - allows developer to assign a person to an group.
    *
-   * @param {Omit<FunctionaryEntity, 'properties'>} child - __REQUIRED__ The entity to become the child.  This should always be a "customer".
+   * @param {Omit<FunctionaryEntity, 'properties'>} parent - __REQUIRED__ The entity to become the parent.  This should always be a "group".
    *
-   * @param {Omit<FunctionaryEntity, 'properties'>} parent - __REQUIRED__ The entity to become the parent.  This should always be a "organization".
+   * @param {Omit<FunctionaryEntity, 'properties'>} child -  The entity to become the child.  This should always be a "person".  It will try
+   * to use the context if not avail
    *
    * @example ```
-   * // Uses the customer set on the context.
-   * assign({ model: "customer", ids: ["customer-id"] }, { model: "organization", ids: ["organization-id"] })
+   * // Uses the person set on the context.
+   * assign({ model: "person", ids: ["person-id"] }, { model: "group", ids: ["group-id"] })
    * ```
    */
-  assign: (child: Omit<FunctionaryEntity, 'properties'>, parent: Omit<FunctionaryEntity, 'properties'>) => void
+  assign: (parent: Omit<FunctionaryEntity, 'properties'>, child?: Omit<FunctionaryEntity, 'properties'>) => void
   /**
-   * @function addProperties - allows developer to add a property to the customer or organization on the context.  Only
-   * works with the customer set on the context.
+   * @function addProperties - allows developer to add a property to the person or group on the context.  Only
+   * works with the person set on the context.
    *
-   * @param {object} properties - __REQUIRED__ The dictionary of products to add to the customer or organization
+   * @param {object} properties - __REQUIRED__ The dictionary of products to add to the person or group
    *
-   * @param {FunctionarySupportedModel | Omit<FunctionaryEntity, 'properties'>} opts - allows you to specify the customer or organization
-   * on which an property will be assigned. By default, it uses the customer on the context. See the FunctionarySupportedModel,
+   * @param {FunctionarySupportedModel | Omit<FunctionaryEntity, 'properties'>} opts - allows you to specify the person or group
+   * on which an property will be assigned. By default, it uses the person on the context. See the FunctionarySupportedModel,
    * FunctionaryEntity interfaces for typing info -> `import { FunctionarySupportedModel, FunctionaryEntity } from "@funct/core"`.
    *
    * @example ```
-   * // Uses the customer set on the context.
+   * // Uses the person set on the context.
    * addProperties({ aprop: "theValue" })
-   * // Uses the organization | customer set on the context.
-   * addProperties({ aprop: "theValue" }, "organization")
-   * addProperties({ aprop: "theValue" }, "customer")
-   * // Uses the customer with the ids in the Arr of the ids
-   * addProperties({ aprop: "theValue" }, { model: "customer", ids: ["some-id"] } )
+   * // Uses the group | person set on the context.
+   * addProperties({ aprop: "theValue" }, "group")
+   * addProperties({ aprop: "theValue" }, "person")
+   * // Uses the person with the ids in the Arr of the ids
+   * addProperties({ aprop: "theValue" }, { model: "person", ids: ["some-id"] } )
    * ```
    */
   addProperties: (properties: object, opts?: FunctionarySupportedModel | FunctionaryEntity) => void
@@ -171,18 +173,20 @@ export interface Functionary {
    * @function resetContext - allows developer to wipe out the context, specifically when a user logs out.
    *
    * @param {FunctionarySupportedModel[]} models - sets which models to revoke the context from.
-   * By default, its both `['customer', 'organization']`
+   * By default, its both `['person', 'group']`
    *
    * @example ```
-   * // By default, its both `['customer', 'organization']`
+   * // By default, its both `['person', 'group']`
    * resetContext()
-   * // just resets customer
-   * resetContext(['customer'])
-   * // just resets organization
-   * resetContext(['organization'])
+   * // just resets person
+   * resetContext(['person'])
+   * // just resets group
+   * resetContext(['group'])
    * ```
    */
   resetContext: (models?: FunctionarySupportedModel[]) => void
+
+  surfaceDelegate: ISurfaceDelegate
 }
 
 export abstract class BaseFunctionary implements Functionary {
@@ -194,7 +198,7 @@ export abstract class BaseFunctionary implements Functionary {
   private _fireOnNextEvent: boolean
   private _fireOnNextIdentify: boolean
 
-  private surfaceDelegate: ISurfaceDelegate
+  surfaceDelegate: ISurfaceDelegate
 
   constructor(
     surfaceDelegate: ISurfaceDelegate,
@@ -259,7 +263,7 @@ export abstract class BaseFunctionary implements Functionary {
 
   addProperties(
     properties: object,
-    opts: FunctionarySupportedModel | Omit<FunctionaryEntity, 'properties'> = 'customer',
+    opts: FunctionarySupportedModel | Omit<FunctionaryEntity, 'properties'> = 'person',
   ) {
     if (opts.hasOwnProperty('ids')) {
       // send event with the entity passed in
@@ -272,7 +276,7 @@ export abstract class BaseFunctionary implements Functionary {
         // send event with entity from current context
         this.cacheOrSendIdentify({ ids: [knownId], model, properties })
       } else {
-        this._log(`Unable to load ${model} id from context correctly`, 'error')
+        this._log(`Unable to load ${model} id from cache correctly`, 'error')
       }
     }
   }
@@ -308,20 +312,35 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  resetContext(models: FunctionarySupportedModel[] = ['customer', 'organization']): void {
+  resetContext(models: FunctionarySupportedModel[] = ['person', 'group']): void {
     return models.forEach(model => this.revokeEntityContext(model))
   }
 
-  assign(child: Omit<FunctionaryEntity, 'properties'>, parent: Omit<FunctionaryEntity, 'properties'>): void {
-    if (child.model !== 'customer' || parent.model !== 'organization') {
-      const errMess = `functionary can only accept "organization" or "customer" as a model type.`
+  assign(parent: Omit<FunctionaryEntity, 'properties'>, child?: Omit<FunctionaryEntity, 'properties'>): void {
+    let childAssign: Omit<FunctionaryEntity, 'properties'>
+
+    if (!child) {
+      const id = this.surfaceDelegate.get('personReferenceId')
+
+      if (!id) {
+        this._log(`Unable to load person id from cache correctly`, 'error')
+        return
+      } else {
+        childAssign = { model: 'person', ids: [id] }
+      }
+    } else {
+      childAssign = child
+    }
+
+    if (childAssign.model !== 'person' || parent.model !== 'group') {
+      const errMess = `functionary can only accept "group" or "person" as a model type.`
       this._log(errMess, 'error')
     }
 
-    this.cacheOrSendIdentify({ ...child, parent })
+    this.cacheOrSendIdentify({ ...childAssign, parent })
   }
 
-  identify(entity: FunctionaryEntity, opts?: { setToContext?: boolean }): void {
+  identify(entity: FunctionaryEntity, opts?: { setToCache?: boolean }): void {
     if (!this.apikeyExists()) {
       const errMess =
         'Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY or NEXT_PUBLIC_FUNCTIONARY_API_KEY'
@@ -329,12 +348,12 @@ export abstract class BaseFunctionary implements Functionary {
       return
     }
 
-    if (entity.model !== 'customer' && entity.model !== 'organization') {
-      const errMess = `functionary can only accept "organization" or "customer" as a model type.`
+    if (entity.model !== 'person' && entity.model !== 'group') {
+      const errMess = `functionary can only accept "group" or "person" as a model type.`
       this._log(errMess, 'error')
     }
 
-    if (opts && opts.setToContext) {
+    if (opts && opts.setToCache) {
       this.setEntityContext(entity)
     }
 
@@ -390,7 +409,7 @@ export abstract class BaseFunctionary implements Functionary {
     return payloads.forEach(payload => this._call({ endpoint: '/identify', payload }))
   }
 
-  event(payload: FunctionaryClientState, opts: FunctionarySupportedModel | FunctionaryEntity = 'customer'): void {
+  event(payload: FunctionaryClientState, opts: FunctionarySupportedModel | FunctionaryEntity = 'person'): void {
     if (!this.apikeyExists()) {
       const errMess =
         'Functionary API Key not set.  Try calling calling setApiKey(key: string) or set the env var FUNCTIONARY_API_KEY or NEXT_PUBLIC_FUNCTIONARY_API_KEY'
@@ -407,8 +426,8 @@ export abstract class BaseFunctionary implements Functionary {
       // get ent from current cxt
       const model = opts as FunctionarySupportedModel
 
-      if (model !== 'customer' && model !== 'organization') {
-        const errMess = `functionary can only accept "organization" or "customer" as a model type.`
+      if (model !== 'person' && model !== 'group') {
+        const errMess = `functionary can only accept "group" or "person" as a model type.`
         this._log(errMess, 'error')
       }
 
@@ -417,7 +436,7 @@ export abstract class BaseFunctionary implements Functionary {
         // send event with entity from current context
         this.cacheOrSendEvent({ ts, ...payload }, { model, ids: [knownId] })
       } else {
-        this._log(`Unable to load ${model} id from context correctly`, 'error')
+        this._log(`Unable to load ${model} id from cache correctly`, 'error')
       }
     }
   }
@@ -436,7 +455,7 @@ export abstract class BaseFunctionary implements Functionary {
     }
   }
 
-  setupFromSurfaceDelegate(modelsToRestore: FunctionarySupportedModel[] = ['customer', 'organization']) {
+  setupFromSurfaceDelegate(modelsToRestore: FunctionarySupportedModel[] = ['person', 'group']) {
     const keyFromSurface = this.surfaceDelegate.get('apiKey')
     if (!!keyFromSurface) {
       this.apikey = keyFromSurface
@@ -445,7 +464,7 @@ export abstract class BaseFunctionary implements Functionary {
     modelsToRestore.forEach(model => this.restoreEntityContext(model))
   }
 
-  private _log(message: string, type: 'error' | 'warning' | 'normal' = 'normal') {
+  _log(message: string, type: 'error' | 'warning' | 'normal' = 'normal') {
     if (this._debug) {
       switch (type) {
         case 'error': {
@@ -505,6 +524,7 @@ export abstract class BaseFunctionary implements Functionary {
     const payload = BaseFunctionary._stateCache
     BaseFunctionary._stateCache = []
     BaseFunctionary._stateCacheCount = 0
+    debugger
     return this._call({ endpoint: '/state', payload })
   }
 
@@ -514,7 +534,7 @@ export abstract class BaseFunctionary implements Functionary {
       | { endpoint: '/state'; payload: FunctionaryStatePayload[] },
   ): Promise<void> {
     if (this.apikeyExists()) {
-      const requestId = randomUUID()
+      const requestId = uuidv4()
       this._log(`${requestOpts.endpoint} request ${requestId} : ${JSON.stringify(requestOpts.payload)}`)
       return this._http({ ...requestOpts, requestId })
         .then(resp => {
@@ -569,7 +589,7 @@ export abstract class BaseFunctionary implements Functionary {
             'Content-Type': 'application/json',
             'X-Request-Id': requestId,
             'X-Timezone-Offset': new Date().getTimezoneOffset() * 60 * 1000,
-            'X-Source': 'client-js',
+            'X-Source': this.surfaceDelegate.source,
           },
         },
       })
@@ -583,7 +603,7 @@ export abstract class BaseFunctionary implements Functionary {
           'Content-Type': 'application/json',
           'X-Request-Id': requestId,
           'X-Timezone-Offset': new Date().getTimezoneOffset() * 60 * 1000,
-          'X-Source': 'client-js',
+          'X-Source': this.surfaceDelegate.source,
         },
       })
     }

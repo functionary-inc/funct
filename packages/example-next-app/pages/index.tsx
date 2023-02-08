@@ -10,12 +10,12 @@ import Link from 'next/link'
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
-  const functionary = useFunctionary({
+  const { person, group, setApiKey } = useFunctionary({
     debug: true,
     baseURL: 'https://dev-slack-crm.localsymphony.io/api/v1',
   })
 
-  // functionary.setApiKey('fcrm_f39d9854b6de3fe0eb86e1b09ffae91e5a649f22a2ca17e6')
+  // setApiKey('func_dc03effd7989b279ca076af11fc783f6775a8b60cfd8d945')
 
   return (
     <>
@@ -30,61 +30,24 @@ export default function Home() {
           <Link href={'/aNewPage'}>
             <button>Go To NEW PAGE</button>
           </Link>
-          <button
-            onClick={() =>
-              functionary.identify({ model: 'customer', ids: ['some-new-id'], properties: { test: 'aProp' } })
-            }
-          >
-            TEST Identify For customer
-          </button>
+          <button onClick={() => person.identify(['new-test-test'])}>TEST Identify For Person</button>
+
+          <button onClick={() => group.identify(['hello-world'])}>TEST Identify For group</button>
+
+          <button onClick={() => person.group(['hello-world'])}>Assign person to group</button>
 
           <button
-            onClick={() =>
-              functionary.identify({ model: 'organization', ids: ['some-new-id'], properties: { test: 'aOrgProp' } })
-            }
+            onClick={() => {
+              person.reset()
+              group.reset()
+            }}
           >
-            TEST Identify For Organization
+            reset ctx
           </button>
 
-          <button
-            onClick={() =>
-              functionary.assign(
-                { model: 'customer', ids: ['some-new-id'] },
-                { model: 'organization', ids: ['some-new-id'] },
-              )
-            }
-          >
-            Assign customer to Organization
-          </button>
+          <button onClick={() => person.track('button_pressed')}>TEST event for person</button>
 
-          <button onClick={() => functionary.resetContext()}>reset ctx</button>
-
-          <button onClick={() => functionary.event({ name: 'button_pressed' })}>TEST event for customer</button>
-
-          <button onClick={() => functionary.event({ name: 'org_button_pressed' }, 'organization')}>
-            TEST event for organization
-          </button>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>pages/index.tsx</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
-          </div>
+          <button onClick={() => group.track('org_button_pressed')}>TEST event for group</button>
         </div>
 
         <div className={styles.center}>

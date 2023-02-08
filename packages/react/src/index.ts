@@ -5,6 +5,8 @@ import {
   FunctionaryClientState,
   FunctionaryEntity,
   FunctionarySupportedModel,
+  Person,
+  Group,
 } from '@funct/core'
 export {
   FunctionaryIdentify,
@@ -14,6 +16,8 @@ export {
   FunctionaryStatePayload,
   Functionary,
   FunctionarySupportedModel,
+  Person,
+  Group,
 } from '@funct/core'
 import { useCallback, useEffect, useMemo } from 'react'
 
@@ -32,13 +36,9 @@ class ReactFunctionary extends BaseFunctionary {
  *
  * @returns 5 functions.  See Below. 👇👇👇
  *
- * @function identify - Allows developers to identify customers and organizations.
+ * @instance person - Allows developers to identify customers and organizations.
  *
- * @function event - Allows developers to send events for customers and organizations.
- *
- * @function assign - Allows developers to assign a customer to an organization.
- *
- * @function resetContext - Allows developers wipe out the context specifically if a user logs out.
+ * @instance group - Allows developers to identify customers and organizations.
  *
  * @function setApiKey - set the API Key for your functionary workspace.
  *
@@ -47,52 +47,36 @@ export const useFunctionary = (options?: {
   on?: boolean
   debug?: boolean
   fireOnInstantiation?: boolean
+  setToCacheByDefault?: boolean
   persistentType?: 'both' | 'cookie' | 'localStorage'
   baseURL?: string
-}): Functionary => {
-  const functionary = useMemo<ReactFunctionary>(() => {
-    const { on = true, debug = false, fireOnInstantiation = true, baseURL, persistentType = 'both' } = options || {}
-    return new ReactFunctionary(persistentType, { stub: !on, debug, fireOnInstantiation, baseURL })
+}): { person: Person; group: Group; setApiKey: (apiKey: string) => void } => {
+  const { person, group, functionary } = useMemo<{
+    group: Group
+    person: Person
+    functionary: ReactFunctionary
+  }>(() => {
+    const {
+      on = true,
+      debug = false,
+      fireOnInstantiation = true,
+      baseURL,
+      persistentType = 'both',
+      setToCacheByDefault = true,
+    } = options || {}
+    const functionary = new ReactFunctionary(persistentType, { stub: !on, debug, fireOnInstantiation, baseURL })
+    const person = new Person(functionary, setToCacheByDefault)
+    const group = new Group(functionary, setToCacheByDefault)
+    return { person, group, functionary }
   }, [])
 
   useEffect(() => functionary.setupFromSurfaceDelegate(), [functionary])
 
-  const identify = useCallback(
-    (entity: FunctionaryEntity, opts: { setToContext?: boolean } = { setToContext: true }) =>
-      functionary.identify(entity, opts),
-    [functionary],
-  )
-
-  const resetContext = useCallback(
-    (models: FunctionarySupportedModel[] = ['customer', 'organization']) => functionary.resetContext(models),
-    [functionary],
-  )
-
-  const assign = useCallback(
-    (customer: FunctionaryEntity, organization: FunctionaryEntity) => functionary.assign(customer, organization),
-    [functionary],
-  )
-
-  const addProperties = useCallback(
-    (properties: object, opts?: FunctionarySupportedModel | FunctionaryEntity) =>
-      functionary.addProperties(properties, opts),
-    [functionary],
-  )
-
-  const event = useCallback(
-    (payload: FunctionaryClientState, opts: FunctionaryEntity | FunctionarySupportedModel = 'customer') =>
-      functionary.event(payload, opts),
-    [functionary],
-  )
-
   const setApiKey = useCallback((apiKey: string) => functionary.setApiKey(apiKey), [functionary])
 
   return {
-    event,
-    identify,
-    addProperties,
-    resetContext,
-    assign,
+    person,
+    group,
     setApiKey,
   }
 }

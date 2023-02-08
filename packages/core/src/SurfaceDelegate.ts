@@ -1,4 +1,5 @@
 export interface ISurfaceDelegate {
+  source: string
   get: (key: string) => string | null
   set: (key: string, value: string) => void
   remove: (key: string) => void
@@ -9,6 +10,8 @@ export interface ISurfaceDelegate {
 export class BrowserSurfaceDelegate implements ISurfaceDelegate {
   private _prefix: string = 'functionary_client_'
   private _persistenceType: 'both' | 'cookie' | 'localStorage'
+
+  source = 'client-browser'
 
   constructor(persistenceType: 'both' | 'cookie' | 'localStorage' = 'both') {
     this._persistenceType = persistenceType
@@ -141,6 +144,8 @@ export class BrowserSurfaceDelegate implements ISurfaceDelegate {
 
 export class NodeSurfaceDelegate implements ISurfaceDelegate {
   private static _memory: { [key: string]: string } = {}
+
+  source = 'client-node'
 
   addFlushListeners(flush: () => Promise<void> | undefined) {
     // https://stackoverflow.com/questions/14031763/doing-a-cleanup-action-just-before-node-js-exits

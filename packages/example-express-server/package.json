@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev:start": "kill-port 3002 && ts-node server.ts",
+    "dev:start": "kill-port 3002 && dotenv-flow ts-node server.ts",
     "dev": "nodemon --exec \"yarn dev:start\" --watch server.ts",
     "lint": "tslint -p tsconfig.json"
   },
@@ -15,6 +15,8 @@
     "express": "^4.18.2",
     "nodemon": "^2.0.20",
     "ts-node": "^10.9.1",
+    "dotenv-flow": "3.2.0",
+    "dotenv-flow-cli": "1.0.0",
     "typescript": "^4.9.4"
   },
   "dependencies": {

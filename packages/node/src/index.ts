@@ -1,4 +1,4 @@
-import { BaseFunctionary, Functionary as IFunctionary, NodeSurfaceDelegate } from '@funct/core'
+import { BaseFunctionary, Functionary as IFunctionary, NodeSurfaceDelegate, Person, Group } from '@funct/core'
 export {
   FunctionaryIdentify,
   FunctionaryEntity,
@@ -7,6 +7,8 @@ export {
   FunctionaryStatePayload,
   Functionary as IFunctionary,
   FunctionarySupportedModel,
+  Person,
+  Group,
 } from '@funct/core'
 
 /**
@@ -66,3 +68,5 @@ export class Functionary extends BaseFunctionary implements IFunctionary {
  * a prebuilt instance of the Functionary for convenience
  */
 export const functionary = new Functionary() as IFunctionary
+export const person = new Person(functionary, false)
+export const group = new Group(functionary, false)
